@@ -11,21 +11,20 @@ import java.util.Objects;
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private long id;
     @Column(nullable = false, length = 100)
     private String name;
     @Column(nullable = false, length = 255)
     private String email;
     @Column(nullable = false, length = 11, unique = true)
-    private long cpf;
+    private String cpf;
     @Column(nullable = false)
     private LocalDate birthDate;
 
     public Client() {
     }
 
-    public Client(String name, String email, long cpf, LocalDate birthDate) {
+    public Client(String name, String email, String cpf, LocalDate birthDate) {
         this.name = name;
         this.email = email;
         this.cpf = cpf;
