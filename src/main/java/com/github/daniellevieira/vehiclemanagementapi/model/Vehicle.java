@@ -23,14 +23,14 @@ public class Vehicle {
     @JoinColumn(name = "client_id", nullable = false)
     private Client owner;
 
-    public Vehicle() {
+    protected Vehicle() {
     }
 
     public Vehicle(String make, String model, int year, String licensePlate, Client owner) {
-        this.make = make;
-        this.model = model;
+        this.make = make.trim().toUpperCase();
+        this.model = model.trim().toUpperCase();
         this.year = year;
-        this.licensePlate = licensePlate;
+        this.licensePlate = licensePlate.trim().toUpperCase();
         this.owner = owner;
     }
 

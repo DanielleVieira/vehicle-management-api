@@ -42,3 +42,7 @@ dependencies {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
+tasks.withType<JavaCompile> { // para que o mapstruct consiga usar o construtor com parâmetros, pois não uso setters
+	options.compilerArgs.add("-parameters")
+}

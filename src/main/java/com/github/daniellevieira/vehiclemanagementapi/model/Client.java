@@ -21,13 +21,13 @@ public class Client {
     @Column(nullable = false)
     private LocalDate birthDate;
 
-    public Client() {
+    protected Client() { // protected para o mapstruct preferir usar o construtos com argumentos. jpa continua funcionando.
     }
 
     public Client(String name, String email, String cpf, LocalDate birthDate) {
-        this.name = name;
-        this.email = email;
-        this.cpf = cpf;
+        this.name = name.trim().toUpperCase();
+        this.email = email.trim().toLowerCase();
+        this.cpf = cpf.trim();
         this.birthDate = birthDate;
     }
 
