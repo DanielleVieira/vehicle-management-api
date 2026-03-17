@@ -22,9 +22,8 @@ public class ClientService {
         this.clientMapper = clientMapper;
     }
 
-    // TODO validar cpf repetido
     public ClientResponse createClient(ClientCreateRequest clientCreateRequest) {
-        var newClient = clientRepository.save(clientMapper.toEntity(clientCreateRequest));
+        var newClient = saveClient(clientMapper.toEntity(clientCreateRequest));
         return clientMapper.toResponse(newClient);
     }
 
