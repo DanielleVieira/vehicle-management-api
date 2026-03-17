@@ -4,7 +4,6 @@ import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleResponse;
 import com.github.daniellevieira.vehiclemanagementapi.factory.VehicleFactory;
 import com.github.daniellevieira.vehiclemanagementapi.mapper.VehicleMapper;
-import com.github.daniellevieira.vehiclemanagementapi.model.Vehicle;
 import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
 import com.github.daniellevieira.vehiclemanagementapi.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
