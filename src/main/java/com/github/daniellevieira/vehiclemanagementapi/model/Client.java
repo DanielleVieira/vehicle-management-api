@@ -25,6 +25,15 @@ public class Client {
     }
 
     public Client(String name, String email, String cpf, LocalDate birthDate) {
+        setClientProperties(name, email, cpf, birthDate);
+    }
+
+    public Client updateClient(String newName, String newEmail, String newCpf, LocalDate newBirthDate) {
+        setClientProperties(newName, newEmail, newCpf, newBirthDate);
+        return this;
+    }
+
+    private void setClientProperties(String name, String email, String cpf, LocalDate birthDate) {
         this.name = name.trim().toUpperCase();
         this.email = email.trim().toLowerCase();
         this.cpf = cpf.trim();
