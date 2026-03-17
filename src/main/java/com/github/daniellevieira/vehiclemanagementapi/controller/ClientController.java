@@ -2,14 +2,12 @@ package com.github.daniellevieira.vehiclemanagementapi.controller;
 
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientResponse;
-import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
 import com.github.daniellevieira.vehiclemanagementapi.service.ClientService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/clients")
@@ -22,9 +20,22 @@ public class ClientController {
 
     // TODO handle para quando o client ou campos vem nulo ou incorretos
     @PostMapping
-    public ResponseEntity<ClientResponse>  createClient(@RequestBody ClientCreateRequest clientCreateRequest) {
+    public ResponseEntity<ClientResponse> createClient(@RequestBody ClientCreateRequest clientCreateRequest) {
         var clientRes = clientService.createClient(clientCreateRequest);
         var location = UriUtils.createLocationFromCurrentRequest(Long.toString(clientRes.id()));
         return ResponseEntity.created(location).body(clientRes);
     }
+
+    // TODO handle de cliente não encontrado e id inválido ou nulo
+    @GetMapping("/{id}")
+    public ResponseEntity<ClientResponse> getClient(@RequestParam Long id) {
+        return ResponseEntity.ok(clientService.getClient(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ClientResponse>> getAllClients() {
+        return ResponseEntity.ok(clientService.getAllClients());
+    }
+
+
 }
