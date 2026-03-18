@@ -1,9 +1,8 @@
 package com.github.daniellevieira.vehiclemanagementapi.dto;
 
-public record VehicleCreateRequest(
+public record VehiclePutRequest(
         String make,
         String model,
         int year,
-        String licensePlate,
-        long ownerId
+        String licensePlate
 ) implements VehicleRequest { }

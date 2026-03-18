@@ -27,6 +27,26 @@ public class Vehicle {
     }
 
     public Vehicle(String make, String model, int year, String licensePlate, Client owner) {
+        setVehicleProperties(make, model, year, licensePlate, owner);
+    }
+
+    public Vehicle updateVehicle(
+            String newMake,
+            String newModel,
+            int newYear,
+            String newLicensePlate
+    ) {
+        setVehicleProperties(newMake, newModel, newYear, newLicensePlate, this.owner);
+        return this;
+    }
+
+    private void setVehicleProperties(
+            String make,
+            String model,
+            int year,
+            String licensePlate,
+            Client owner
+    ) {
         this.make = make.trim().toUpperCase();
         this.model = model.trim().toUpperCase();
         this.year = year;

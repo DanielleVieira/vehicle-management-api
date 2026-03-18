@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ClientService {
@@ -54,11 +55,15 @@ public class ClientService {
 
     private Client saveClient(Client client) {
         var savedClient =  clientRepository.findByCpf(client.getCpf());
-        if(savedClient.isPresent() && savedClient.get().getId() != client.getId()) {
+        if(savedClient.isPresent() && notHaveEqualsCpf(client, savedClient.get())) {
            // TODO criar a execeção
             return null;
         } else {
             return clientRepository.save(client);
         }
+    }
+
+    private static boolean notHaveEqualsCpf(Client client, Client savedClient) {
+        return savedClient.getId() != client.getId();
     }
 }

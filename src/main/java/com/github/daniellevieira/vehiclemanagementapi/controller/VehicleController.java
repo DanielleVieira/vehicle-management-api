@@ -1,6 +1,7 @@
 package com.github.daniellevieira.vehiclemanagementapi.controller;
 
 import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleCreateRequest;
+import com.github.daniellevieira.vehiclemanagementapi.dto.VehiclePutRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleResponse;
 import com.github.daniellevieira.vehiclemanagementapi.service.VehicleService;
 import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
@@ -18,7 +19,7 @@ public class VehicleController {
         this.vehicleService = vehicleService;
     }
 
-    // TODO handle para quando o vehicle ou campos vem nulo ou incorretos e quando clientId é incorreto
+    // TODO handle para quando o vehicle ou campos vem nulo ou incorretos e quando clientId é incorreto e placa repetida no banco
     @PostMapping
     public ResponseEntity<VehicleResponse> createVehicle(@RequestBody VehicleCreateRequest vehicleCreateRequest) {
         var vehicleResponse = vehicleService.createVehicle(vehicleCreateRequest);
@@ -42,6 +43,13 @@ public class VehicleController {
     public ResponseEntity<VehicleResponse> deleteVehicle(@RequestParam Long id) {
         vehicleService.deleteVehicle(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // TODO handle id de veículo inválido ou nulo, parâmentros inválidos ou nulos, veículo não encontrado, e placa repetida no banco
+    // Não permite atualizar o owner, apenas dados do veículo
+    @PutMapping("/{vehicleId}")
+    public ResponseEntity<VehicleResponse> updateVehicle(@RequestParam Long vehicleId, @RequestBody VehiclePutRequest vehiclePutRequest) {
+        return ResponseEntity.ok(vehicleService.updateVehicle(vehicleId, vehiclePutRequest));
     }
 
 }
