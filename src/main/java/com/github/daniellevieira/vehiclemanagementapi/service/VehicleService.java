@@ -8,6 +8,8 @@ import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepositor
 import com.github.daniellevieira.vehiclemanagementapi.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class VehicleService {
 
@@ -34,5 +36,18 @@ public class VehicleService {
                 .orElseThrow();
         var vehicle = vehicleFactory.create(vehicleCreateRequest, owner);
         return vehicleMapper.toResponse(vehicleRepository.save(vehicle));
+    }
+
+    public List<VehicleResponse> getAllVehicles() {
+        return vehicleMapper.toResponseList(vehicleRepository.findAll());
+    }
+
+    public VehicleResponse getVehicle(Long vehicleId) {
+        var vehicle = vehicleRepository.findById(vehicleId).orElseThrow();
+        return vehicleMapper.toResponse(vehicle);
+    }
+
+    public void deleteVehicle(Long vehicleId) {
+        vehicleRepository.deleteById(vehicleId);
     }
 }

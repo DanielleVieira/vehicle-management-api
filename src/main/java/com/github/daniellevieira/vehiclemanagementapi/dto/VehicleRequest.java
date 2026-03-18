@@ -1,6 +1,6 @@
 package com.github.daniellevieira.vehiclemanagementapi.dto;
 
-public interface VehicleDTO {
+public interface VehicleRequest {
     String make();
 
     String model();

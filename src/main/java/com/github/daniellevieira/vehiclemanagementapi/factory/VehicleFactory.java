@@ -1,7 +1,6 @@
 package com.github.daniellevieira.vehiclemanagementapi.factory;
 
-import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleCreateRequest;
-import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleDTO;
+import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleRequest;
 import com.github.daniellevieira.vehiclemanagementapi.model.Client;
 import com.github.daniellevieira.vehiclemanagementapi.model.Vehicle;
 import org.springframework.stereotype.Component;
@@ -9,12 +8,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class VehicleFactory {
 
-    public Vehicle create(VehicleDTO vehicleDTO, Client owner) {
+    public Vehicle create(VehicleRequest vehicleRequest, Client owner) {
         return new Vehicle(
-                vehicleDTO.make(),
-                vehicleDTO.model(),
-                vehicleDTO.year(),
-                vehicleDTO.licensePlate(),
+                vehicleRequest.make(),
+                vehicleRequest.model(),
+                vehicleRequest.year(),
+                vehicleRequest.licensePlate(),
                 owner
         );
     }

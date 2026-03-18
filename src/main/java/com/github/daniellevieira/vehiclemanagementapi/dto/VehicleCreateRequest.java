@@ -6,4 +6,4 @@ public record VehicleCreateRequest(
         int year,
         String licensePlate,
         long ownerId // ver como fica pra pegar só um ID existente
-) implements VehicleDTO { }
+) implements VehicleRequest { }
