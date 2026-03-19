@@ -34,13 +34,13 @@ public class VehicleController {
 
     // TODO handle de veículo não encontrado, id inválido ou nulo
     @GetMapping("/{id}")
-    public ResponseEntity<VehicleResponse> getVehicle(@RequestParam Long id) {
+    public ResponseEntity<VehicleResponse> getVehicle(@PathVariable Long id) {
         return ResponseEntity.ok(vehicleService.getVehicle(id));
     }
 
     // TODO handle de id nulo ou inválido
-    @DeleteMapping
-    public ResponseEntity<VehicleResponse> deleteVehicle(@RequestParam Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<VehicleResponse> deleteVehicle(@PathVariable Long id) {
         vehicleService.deleteVehicle(id);
         return ResponseEntity.noContent().build();
     }
@@ -48,7 +48,7 @@ public class VehicleController {
     // TODO handle id de veículo inválido ou nulo, parâmentros inválidos ou nulos, veículo não encontrado, e placa repetida no banco
     // Não permite atualizar o owner, apenas dados do veículo
     @PutMapping("/{vehicleId}")
-    public ResponseEntity<VehicleResponse> updateVehicle(@RequestParam Long vehicleId, @RequestBody VehiclePutRequest vehiclePutRequest) {
+    public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable Long vehicleId, @RequestBody VehiclePutRequest vehiclePutRequest) {
         return ResponseEntity.ok(vehicleService.updateVehicle(vehicleId, vehiclePutRequest));
     }
 

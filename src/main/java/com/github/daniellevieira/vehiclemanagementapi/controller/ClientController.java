@@ -29,7 +29,7 @@ public class ClientController {
 
     // TODO handle de cliente não encontrado e id inválido ou nulo
     @GetMapping("/{id}")
-    public ResponseEntity<ClientResponse> getClient(@RequestParam Long id) {
+    public ResponseEntity<ClientResponse> getClient(@PathVariable Long id) {
         return ResponseEntity.ok(clientService.getClient(id));
     }
 
@@ -40,7 +40,7 @@ public class ClientController {
 
     // TODO handle de id inválido ou nulo
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteClient(@RequestParam Long id) {
+    public ResponseEntity deleteClient(@PathVariable Long id) {
         clientService.deleteClient(id);
         return ResponseEntity.noContent().build();
     }
