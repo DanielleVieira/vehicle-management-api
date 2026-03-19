@@ -6,12 +6,9 @@ import com.github.daniellevieira.vehiclemanagementapi.dto.ClientResponse;
 import com.github.daniellevieira.vehiclemanagementapi.mapper.ClientMapper;
 import com.github.daniellevieira.vehiclemanagementapi.model.Client;
 import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ClientService {
@@ -55,7 +52,7 @@ public class ClientService {
 
     private Client saveClient(Client client) {
         var savedClient =  clientRepository.findByCpf(client.getCpf());
-        if(savedClient.isPresent() && notHaveEqualsCpf(client, savedClient.get())) {
+        if(savedClient.isPresent() && notHaveEqualsId(client, savedClient.get())) {
            // TODO criar a execeção
             return null;
         } else {
@@ -63,7 +60,7 @@ public class ClientService {
         }
     }
 
-    private static boolean notHaveEqualsCpf(Client client, Client savedClient) {
+    private static boolean notHaveEqualsId(Client client, Client savedClient) {
         return savedClient.getId() != client.getId();
     }
 }

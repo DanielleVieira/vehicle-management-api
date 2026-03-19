@@ -30,14 +30,13 @@ public class Vehicle {
         setVehicleProperties(make, model, year, licensePlate, owner);
     }
 
-    public Vehicle updateVehicle(
+    public void updateVehicle(
             String newMake,
             String newModel,
             int newYear,
             String newLicensePlate
     ) {
         setVehicleProperties(newMake, newModel, newYear, newLicensePlate, this.owner);
-        return this;
     }
 
     private void setVehicleProperties(

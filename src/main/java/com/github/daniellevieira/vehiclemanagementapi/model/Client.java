@@ -28,9 +28,8 @@ public class Client {
         setClientProperties(name, email, cpf, birthDate);
     }
 
-    public Client updateClient(String newName, String newEmail, String newCpf, LocalDate newBirthDate) {
+    public void updateClient(String newName, String newEmail, String newCpf, LocalDate newBirthDate) {
         setClientProperties(newName, newEmail, newCpf, newBirthDate);
-        return this;
     }
 
     private void setClientProperties(String name, String email, String cpf, LocalDate birthDate) {

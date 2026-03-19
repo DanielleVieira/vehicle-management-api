@@ -66,7 +66,7 @@ public class VehicleService {
 
     private Vehicle saveVehicle(Vehicle vehicle) {
         var savedVehicle =  vehicleRepository.findByLicensePlate(vehicle.getLicensePlate());
-        if(savedVehicle.isPresent() && notHaveEqualsLicensePlate(vehicle, savedVehicle.get())) {
+        if(savedVehicle.isPresent() && notHaveEqualsId(vehicle, savedVehicle.get())) {
             // TODO criar a execeção
             return null;
         } else {
@@ -74,7 +74,13 @@ public class VehicleService {
         }
     }
 
-    private boolean notHaveEqualsLicensePlate(Vehicle vehicle, Vehicle savedVehicle) {
-        return !savedVehicle.getLicensePlate().equals(vehicle.getLicensePlate());
+    private boolean notHaveEqualsId(Vehicle vehicle, Vehicle savedVehicle) {
+        return savedVehicle.getId() != vehicle.getId();
+    }
+
+    public List<VehicleResponse> getVehiclesByOwnerId(Long ownerId) {
+        var owner = clientRepository.findById(ownerId).orElseThrow();
+        var vehicles = vehicleRepository.findAllByOwner(owner);
+        return vehicleMapper.toResponseList(vehicles);
     }
 }

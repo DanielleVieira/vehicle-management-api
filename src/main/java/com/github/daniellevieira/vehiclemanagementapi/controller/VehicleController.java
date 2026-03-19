@@ -27,8 +27,12 @@ public class VehicleController {
         return ResponseEntity.created(location).body(vehicleResponse);
     }
 
+    // TODO handle pro caso de ownerId inválido, ou owner não encontrado
     @GetMapping
-    public ResponseEntity<List<VehicleResponse>> getAllVehicles() {
+    public ResponseEntity<List<VehicleResponse>> getAllVehicles(@RequestParam(required = false) Long ownerId) {
+        if (ownerId != null) {
+            return ResponseEntity.ok(vehicleService.getVehiclesByOwnerId(ownerId));
+        }
         return ResponseEntity.ok(vehicleService.getAllVehicles());
     }
 
