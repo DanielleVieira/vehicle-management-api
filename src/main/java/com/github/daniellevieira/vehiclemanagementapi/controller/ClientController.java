@@ -28,9 +28,9 @@ public class ClientController {
     }
 
     // TODO handle de cliente não encontrado e id inválido ou nulo
-    @GetMapping("/{id}")
-    public ResponseEntity<ClientResponse> getClient(@PathVariable Long id) {
-        return ResponseEntity.ok(clientService.getClient(id));
+    @GetMapping("/{clientId}")
+    public ResponseEntity<ClientResponse> getClient(@PathVariable Long clientId) {
+        return ResponseEntity.ok(clientService.getClient(clientId));
     }
 
     @GetMapping
@@ -39,16 +39,16 @@ public class ClientController {
     }
 
     // TODO handle de id inválido ou nulo
-    @DeleteMapping("/{id}")
-    public ResponseEntity deleteClient(@PathVariable Long id) {
-        clientService.deleteClient(id);
+    @DeleteMapping("/{clientId}")
+    public ResponseEntity deleteClient(@PathVariable Long clientId) {
+        clientService.deleteClient(clientId);
         return ResponseEntity.noContent().build();
     }
 
     // TODO handle de id inválido ou nulo, e parâmetros incorretos ou usuário inexistente ou cpf repetido;
-    @PutMapping("/{id}")
-    public ResponseEntity<ClientResponse> updateClient(@PathVariable Long id, @RequestBody ClientPutRequest clientPutRequest) {
-        return ResponseEntity.ok(clientService.updateClient(id, clientPutRequest));
+    @PutMapping("/{clientId}")
+    public ResponseEntity<ClientResponse> updateClient(@PathVariable Long clientId, @RequestBody ClientPutRequest clientPutRequest) {
+        return ResponseEntity.ok(clientService.updateClient(clientId, clientPutRequest));
     }
 
 }

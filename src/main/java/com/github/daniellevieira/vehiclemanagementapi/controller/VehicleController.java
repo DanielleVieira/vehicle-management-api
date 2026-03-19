@@ -37,15 +37,15 @@ public class VehicleController {
     }
 
     // TODO handle de veículo não encontrado, id inválido ou nulo
-    @GetMapping("/{id}")
-    public ResponseEntity<VehicleResponse> getVehicle(@PathVariable Long id) {
-        return ResponseEntity.ok(vehicleService.getVehicle(id));
+    @GetMapping("/{vehicleId}")
+    public ResponseEntity<VehicleResponse> getVehicle(@PathVariable Long vehicleId) {
+        return ResponseEntity.ok(vehicleService.getVehicle(vehicleId));
     }
 
     // TODO handle de id nulo ou inválido
-    @DeleteMapping("/{id}")
-    public ResponseEntity<VehicleResponse> deleteVehicle(@PathVariable Long id) {
-        vehicleService.deleteVehicle(id);
+    @DeleteMapping("/{vehicleId}")
+    public ResponseEntity<VehicleResponse> deleteVehicle(@PathVariable Long vehicleId) {
+        vehicleService.deleteVehicle(vehicleId);
         return ResponseEntity.noContent().build();
     }
 
