@@ -33,10 +33,18 @@ public class Client {
     }
 
     private void setClientProperties(String name, String email, String cpf, LocalDate birthDate) {
-        this.name = name.trim().toUpperCase();
-        this.email = email.trim().toLowerCase();
-        this.cpf = cpf.trim();
-        this.birthDate = birthDate;
+        this.name = Objects.requireNonNull(name)
+                .trim()
+                .toUpperCase();
+        this.email = Objects.requireNonNull(email)
+                .trim()
+                .toLowerCase();
+        this.cpf = Objects.requireNonNull(cpf)
+                .trim()
+                .replace(" ", "")
+                .replace("-", "")
+                .replace(".", "");
+        this.birthDate = Objects.requireNonNull(birthDate);
     }
 
     @Override
