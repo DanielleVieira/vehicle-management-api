@@ -17,7 +17,7 @@ public class Vehicle {
     private String model;
     @Column(nullable = false, length = 4)
     private int year;
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 7)
     private String licensePlate;
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
@@ -46,11 +46,18 @@ public class Vehicle {
             String licensePlate,
             Client owner
     ) {
-        this.make = make.trim().toUpperCase();
-        this.model = model.trim().toUpperCase();
+        this.make = Objects.requireNonNull(make)
+                .trim()
+                .toUpperCase();
+        this.model = Objects.requireNonNull(model)
+                .trim()
+                .toUpperCase();
         this.year = year;
-        this.licensePlate = licensePlate.trim().toUpperCase();
-        this.owner = owner;
+        this.licensePlate = Objects.requireNonNull(licensePlate)
+                .trim()
+                .toUpperCase()
+                .replace("-", "");
+        this.owner = Objects.requireNonNull(owner);
     }
 
     @Override

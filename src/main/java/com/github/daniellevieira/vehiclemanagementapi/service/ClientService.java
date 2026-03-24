@@ -35,6 +35,7 @@ public class ClientService {
         return clientMapper.toResponseList(clients);
     }
 
+    // TODO acrescentar verificação de se o vehicle existe para retornar uma exceção caso não
     public void deleteClient(Long id) {
         clientRepository.deleteById(id);
     }

@@ -5,7 +5,7 @@ public interface VehicleRequest {
 
     String model();
 
-    int year();
+    Integer year();
 
     String licensePlate();
 }

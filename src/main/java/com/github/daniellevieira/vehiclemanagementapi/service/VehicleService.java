@@ -10,6 +10,7 @@ import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepositor
 import com.github.daniellevieira.vehiclemanagementapi.repository.VehicleRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -32,7 +33,9 @@ public class VehicleService {
         this.clientRepository = clientRepository;
     }
 
+    // TODO verificar se o ano é menor ou igual ao atual
     public VehicleResponse createVehicle(VehicleCreateRequest vehicleCreateRequest) {
+        validateVehicleYear(vehicleCreateRequest.year());
         var owner = clientRepository
                 .findById(vehicleCreateRequest.ownerId())
                 .orElseThrow();
@@ -49,11 +52,13 @@ public class VehicleService {
         return vehicleMapper.toResponse(vehicle);
     }
 
+    // TODO acrescentar verificação de se o vehicle existe para retornar uma exceção caso não
     public void deleteVehicle(Long vehicleId) {
         vehicleRepository.deleteById(vehicleId);
     }
 
     public VehicleResponse updateVehicle(Long vehicleId, VehiclePutRequest vehicleReq) {
+        validateVehicleYear(vehicleReq.year());
         var vehicle = vehicleRepository.findById(vehicleId).orElseThrow();
         vehicle.updateVehicle(
                 vehicleReq.make(),
@@ -64,23 +69,25 @@ public class VehicleService {
         return vehicleMapper.toResponse(saveVehicle(vehicle));
     }
 
+    public List<VehicleResponse> getVehiclesByOwnerId(Long ownerId) {
+        var owner = clientRepository.findById(ownerId).orElseThrow();
+        var vehicles = vehicleRepository.findAllByOwner(owner);
+        return vehicleMapper.toResponseList(vehicles);
+    }
+
     private Vehicle saveVehicle(Vehicle vehicle) {
         var savedVehicle =  vehicleRepository.findByLicensePlate(vehicle.getLicensePlate());
-        if(savedVehicle.isPresent() && notHaveEqualsId(vehicle, savedVehicle.get())) {
+        if(savedVehicle.isPresent() && !vehicle.equals(savedVehicle.get())) {
             // TODO criar a execeção
-            return null;
+            throw new RuntimeException();
         } else {
             return vehicleRepository.save(vehicle);
         }
     }
 
-    private boolean notHaveEqualsId(Vehicle vehicle, Vehicle savedVehicle) {
-        return savedVehicle.getId() != vehicle.getId();
-    }
-
-    public List<VehicleResponse> getVehiclesByOwnerId(Long ownerId) {
-        var owner = clientRepository.findById(ownerId).orElseThrow();
-        var vehicles = vehicleRepository.findAllByOwner(owner);
-        return vehicleMapper.toResponseList(vehicles);
+    private void validateVehicleYear(int year) {
+        if(year > LocalDate.now().getYear()) {
+            throw new RuntimeException();
+        }
     }
 }
