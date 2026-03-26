@@ -18,10 +18,10 @@ As entidades normalizam dados automaticamente:
 ## Stack
 
 - Java 25
-- Spring Boot 4.0.x
+- Spring Boot 4.0.3
 - Spring Data JPA + Hibernate
 - MySQL
-- MapStruct
+- MapStruct 1.5.5.Final
 - Lombok
 - Springdoc OpenAPI (Swagger UI)
 
@@ -56,6 +56,25 @@ export PASSWORD_DB=secret
 
 - UI: `http://localhost:8080/swagger-ui/index.html`
 - JSON: `http://localhost:8080/v3/api-docs`
+
+## Validações e regras
+
+### Clientes
+
+- `name`: obrigatório, 3 a 100 caracteres.
+- `email`: obrigatório, formato válido, até 255 caracteres.
+- `cpf`: obrigatório, válido (`@CPF`).
+- `birthDate`: obrigatório e no passado.
+
+### Veículos
+
+- `make`: obrigatório, 3 a 50 caracteres.
+- `model`: obrigatório, 3 a 100 caracteres.
+- `year`: obrigatório, mínimo 1886 e não pode ser no futuro.
+- `licensePlate`: obrigatório, 7 a 8 caracteres, padrão brasileiro antigo ou Mercosul.
+- `ownerId`: obrigatório e positivo (somente no `POST`).
+
+Observação: o `PUT /vehicles/{vehicleId}` não permite alterar o proprietário.
 
 ## Endpoints
 
@@ -115,4 +134,26 @@ Payload `PUT /vehicles/{vehicleId}`:
 ## Observações
 
 - `POST` retorna `201 Created` com header `Location`.
-- O projeto ainda não tem tratamento de exceções customizadas; erros de validação e duplicidade de CPF/placa podem resultar em respostas genéricas do Spring/JPA.
+- A API possui tratamento de exceções com resposta padronizada.
+
+Exemplo de resposta de erro:
+
+```json
+{
+  "timestamp": "2025-01-01T12:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed. Please check your request parameters",
+  "path": "/api/v1/vehicles",
+  "details": [
+    "licensePlate: Deve seguir o padrão brasileiro antigo ou Mercosul"
+  ]
+}
+```
+
+Principais códigos retornados:
+
+- `400` para erros de validação.
+- `404` quando o recurso não é encontrado.
+- `409` para conflito (ex.: CPF/placa duplicados).
+- `422` para violações de regra de negócio.
