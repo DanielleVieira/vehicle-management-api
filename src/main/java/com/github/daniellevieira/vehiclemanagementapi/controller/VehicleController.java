@@ -24,7 +24,7 @@ public class VehicleController {
         this.vehicleService = vehicleService;
     }
 
-    // TODO handle para quando o vehicle ou campos vem nulo ou incorretos e quando clientId é incorreto e placa repetida no banco
+    // TODO teste para quando o vehicle ou campos vem nulo ou incorretos e quando clientId é incorreto e placa repetida no banco
     @PostMapping
     public ResponseEntity<VehicleResponse> createVehicle(
             @Valid
@@ -36,7 +36,7 @@ public class VehicleController {
         return ResponseEntity.created(location).body(vehicleResponse);
     }
 
-    // TODO handle pro caso de ownerId inválido, ou owner não encontrado
+    // TODO teste pro caso de ownerId inválido, ou owner não encontrado
     @GetMapping
     public ResponseEntity<List<VehicleResponse>> getAllVehicles(
             @RequestParam(required = false)
@@ -49,7 +49,7 @@ public class VehicleController {
         return ResponseEntity.ok(vehicleService.getAllVehicles());
     }
 
-    // TODO handle de veículo não encontrado, id inválido ou nulo
+    // TODO teste de veículo não encontrado, id inválido ou nulo
     @GetMapping("/{vehicleId}")
     public ResponseEntity<VehicleResponse> getVehicle(
             @PathVariable
@@ -72,7 +72,7 @@ public class VehicleController {
         return ResponseEntity.noContent().build();
     }
 
-    // TODO handle id de veículo inválido ou nulo, parâmentros inválidos ou nulos, veículo não encontrado, e placa repetida no banco
+    // TODO teste id de veículo inválido ou nulo, parâmentros inválidos ou nulos, veículo não encontrado, e placa repetida no banco
     // Não permite atualizar o owner, apenas dados do veículo
     @PutMapping("/{vehicleId}")
     public ResponseEntity<VehicleResponse> updateVehicle(

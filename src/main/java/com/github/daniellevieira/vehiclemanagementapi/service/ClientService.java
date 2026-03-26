@@ -3,6 +3,8 @@ package com.github.daniellevieira.vehiclemanagementapi.service;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientPutRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientResponse;
+import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
+import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
 import com.github.daniellevieira.vehiclemanagementapi.mapper.ClientMapper;
 import com.github.daniellevieira.vehiclemanagementapi.model.Client;
 import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
@@ -26,7 +28,9 @@ public class ClientService {
     }
 
     public ClientResponse getClient(Long id) {
-        var client = clientRepository.findById(id).orElseThrow();
+        var client = clientRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Client with id " + id + " not found"));
         return clientMapper.toResponse(client);
     }
 
@@ -35,13 +39,19 @@ public class ClientService {
         return clientMapper.toResponseList(clients);
     }
 
-    // TODO acrescentar verificação de se o vehicle existe para retornar uma exceção caso não
     public void deleteClient(Long id) {
-        clientRepository.deleteById(id);
+        var exists = clientRepository.existsById(id);
+        if (exists) {
+            clientRepository.deleteById(id);
+        } else {
+            throw new ResourceNotFoundException("Client with id " + id + " not found");
+        }
     }
 
     public ClientResponse updateClient(Long id, ClientPutRequest clientReq) {
-        var client = clientRepository.findById(id).orElseThrow();
+        var client = clientRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Client with id " + id + " not found"));
         client.updateClient(
                 clientReq.name(),
                 clientReq.email(),
@@ -54,8 +64,7 @@ public class ClientService {
     private Client saveClient(Client client) {
         var savedClient =  clientRepository.findByCpf(client.getCpf());
         if(savedClient.isPresent() && !client.equals(savedClient.get())) {
-           // TODO criar a execeção
-            return null;
+            throw new DuplicateResourceException("CPF already registered");
         } else {
             return clientRepository.save(client);
         }

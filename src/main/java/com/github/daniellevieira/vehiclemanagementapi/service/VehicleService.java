@@ -3,6 +3,9 @@ package com.github.daniellevieira.vehiclemanagementapi.service;
 import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.VehiclePutRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleResponse;
+import com.github.daniellevieira.vehiclemanagementapi.exception.BusinessException;
+import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
+import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
 import com.github.daniellevieira.vehiclemanagementapi.factory.VehicleFactory;
 import com.github.daniellevieira.vehiclemanagementapi.mapper.VehicleMapper;
 import com.github.daniellevieira.vehiclemanagementapi.model.Vehicle;
@@ -33,12 +36,11 @@ public class VehicleService {
         this.clientRepository = clientRepository;
     }
 
-    // TODO verificar se o ano é menor ou igual ao atual
     public VehicleResponse createVehicle(VehicleCreateRequest vehicleCreateRequest) {
         validateVehicleYear(vehicleCreateRequest.year());
         var owner = clientRepository
                 .findById(vehicleCreateRequest.ownerId())
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("Owner with id " + vehicleCreateRequest.ownerId() + " not found"));
         var vehicle = vehicleFactory.create(vehicleCreateRequest, owner);
         return vehicleMapper.toResponse(saveVehicle(vehicle));
     }
@@ -48,18 +50,26 @@ public class VehicleService {
     }
 
     public VehicleResponse getVehicle(Long vehicleId) {
-        var vehicle = vehicleRepository.findById(vehicleId).orElseThrow();
+        var vehicle = vehicleRepository
+                .findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle with id " + vehicleId + " not found"));
         return vehicleMapper.toResponse(vehicle);
     }
 
-    // TODO acrescentar verificação de se o vehicle existe para retornar uma exceção caso não
     public void deleteVehicle(Long vehicleId) {
-        vehicleRepository.deleteById(vehicleId);
+        var exists = vehicleRepository.existsById(vehicleId);
+        if (exists) {
+            vehicleRepository.deleteById(vehicleId);
+        } else {
+            throw new ResourceNotFoundException("Vehicle with id " + vehicleId + " not found");
+        }
     }
 
     public VehicleResponse updateVehicle(Long vehicleId, VehiclePutRequest vehicleReq) {
+        var vehicle = vehicleRepository
+                .findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle with id " + vehicleId + " not found"));
         validateVehicleYear(vehicleReq.year());
-        var vehicle = vehicleRepository.findById(vehicleId).orElseThrow();
         vehicle.updateVehicle(
                 vehicleReq.make(),
                 vehicleReq.model(),
@@ -70,7 +80,9 @@ public class VehicleService {
     }
 
     public List<VehicleResponse> getVehiclesByOwnerId(Long ownerId) {
-        var owner = clientRepository.findById(ownerId).orElseThrow();
+        var owner = clientRepository
+                .findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Owner with id " + ownerId + " not found"));
         var vehicles = vehicleRepository.findAllByOwner(owner);
         return vehicleMapper.toResponseList(vehicles);
     }
@@ -78,8 +90,7 @@ public class VehicleService {
     private Vehicle saveVehicle(Vehicle vehicle) {
         var savedVehicle =  vehicleRepository.findByLicensePlate(vehicle.getLicensePlate());
         if(savedVehicle.isPresent() && !vehicle.equals(savedVehicle.get())) {
-            // TODO criar a execeção
-            throw new RuntimeException();
+            throw new DuplicateResourceException("Vehicle license plate already registered.");
         } else {
             return vehicleRepository.save(vehicle);
         }
@@ -87,7 +98,7 @@ public class VehicleService {
 
     private void validateVehicleYear(int year) {
         if(year > LocalDate.now().getYear()) {
-            throw new RuntimeException();
+            throw new BusinessException("The vehicle's year must be a present or past value.");
         }
     }
 }

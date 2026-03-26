@@ -24,7 +24,7 @@ public class ClientController {
         this.clientService = clientService;
     }
 
-    // TODO handle para quando o client ou campos vem nulo ou incorretos ou cpf repetido (exceções do código e do banco)
+    // TODO teste para quando o client ou campos vem nulo ou incorretos ou cpf repetido (exceções do código e do banco)
     @PostMapping
     public ResponseEntity<ClientResponse> createClient(
             @Valid
@@ -36,7 +36,7 @@ public class ClientController {
         return ResponseEntity.created(location).body(clientRes);
     }
 
-    // TODO handle de cliente não encontrado e id inválido ou nulo
+    // TODO teste de cliente não encontrado e id inválido ou nulo
     @GetMapping("/{clientId}")
     public ResponseEntity<ClientResponse> getClient(
             @PathVariable
@@ -52,7 +52,7 @@ public class ClientController {
         return ResponseEntity.ok(clientService.getAllClients());
     }
 
-    // TODO handle de id inválido ou nulo
+    // TODO teste de id inválido ou nulo
     @DeleteMapping("/{clientId}")
     public ResponseEntity deleteClient(
             @PathVariable
@@ -64,7 +64,7 @@ public class ClientController {
         return ResponseEntity.noContent().build();
     }
 
-    // TODO handle de id inválido ou nulo, e parâmetros incorretos ou usuário inexistente ou cpf repetido;
+    // TODO teste de id inválido ou nulo, e parâmetros incorretos ou usuário inexistente ou cpf repetido;
     @PutMapping("/{clientId}")
     public ResponseEntity<ClientResponse> updateClient(
             @PathVariable
