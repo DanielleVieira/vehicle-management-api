@@ -52,13 +52,13 @@ public class ClientService {
         var client = clientRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Client with id " + id + " not found"));
-        client.updateClient(
+        var updatedClient = client.updateClient(
                 clientReq.name(),
                 clientReq.email(),
                 clientReq.cpf(),
                 clientReq.birthDate()
         );
-        return clientMapper.toResponse(saveClient(client));
+        return clientMapper.toResponse(saveClient(updatedClient));
     }
 
     private Client saveClient(Client client) {

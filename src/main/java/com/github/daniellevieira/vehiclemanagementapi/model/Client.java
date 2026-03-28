@@ -25,26 +25,28 @@ public class Client {
     }
 
     public Client(String name, String email, String cpf, LocalDate birthDate) {
-        setClientProperties(name, email, cpf, birthDate);
+        setClientProperties(this, this.id, name, email, cpf, birthDate);
     }
 
-    public void updateClient(String newName, String newEmail, String newCpf, LocalDate newBirthDate) {
-        setClientProperties(newName, newEmail, newCpf, newBirthDate);
+    public Client updateClient(String newName, String newEmail, String newCpf, LocalDate newBirthDate) {
+        return setClientProperties(new Client(), this.id, newName, newEmail, newCpf, newBirthDate);
     }
 
-    private void setClientProperties(String name, String email, String cpf, LocalDate birthDate) {
-        this.name = Objects.requireNonNull(name)
+    private Client setClientProperties(Client client, Long id, String name, String email, String cpf, LocalDate birthDate) {
+        client.id = id;
+        client.name = Objects.requireNonNull(name)
                 .trim()
                 .toUpperCase();
-        this.email = Objects.requireNonNull(email)
+        client.email = Objects.requireNonNull(email)
                 .trim()
                 .toLowerCase();
-        this.cpf = Objects.requireNonNull(cpf)
+        client.cpf = Objects.requireNonNull(cpf)
                 .trim()
                 .replace(" ", "")
                 .replace("-", "")
                 .replace(".", "");
-        this.birthDate = Objects.requireNonNull(birthDate);
+        client.birthDate = Objects.requireNonNull(birthDate);
+        return client;
     }
 
     @Override
