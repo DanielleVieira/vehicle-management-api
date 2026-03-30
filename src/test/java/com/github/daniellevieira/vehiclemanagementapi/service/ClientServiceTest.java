@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -119,7 +120,7 @@ public class ClientServiceTest {
         when(mapper.toEntity(clientCreateReq)).thenReturn(client);
         when(repository.findByCpf(client.getCpf())).thenReturn(Optional.of(savedOtherClient));
 
-        var exception = assertThrows(DuplicateResourceException.class, () -> {service.createClient(clientCreateReq);});
+        var exception = assertThrows(DuplicateResourceException.class, () -> service.createClient(clientCreateReq));
         assertEquals("CPF already registered", exception.getMessage());
         verify(mapper).toEntity(clientCreateReq);
         verify(repository).findByCpf(client.getCpf());
@@ -128,7 +129,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    public void updateClient_UpdateClient_Success_Test() {
+    public void updateClient_UpdateAndSaveClient_Success_Test() {
         when(repository.findById(1L)).thenReturn(Optional.of(savedClient));
         // atualizando um client sem alterar cpf => mesmo id e mesmo cpf
         when(repository.findByCpf(updatedClient.getCpf())).thenReturn(Optional.of(savedClient));
@@ -178,5 +179,83 @@ public class ClientServiceTest {
         verify(repository).findByCpf(updatedClient.getCpf());
         verify(repository, never()).save(any());
         verify(mapper, never()).toResponse(any());
+    }
+
+    @Test
+    public void deleteClient_DeleteClient_Success_Test() {
+        when(repository.existsById(1L)).thenReturn(true);
+        service.deleteClient(1L);
+        verify(repository).existsById(1L);
+        verify(repository).deleteById(1L);
+    }
+
+    @Test
+    public void deleteClient_ClientNotFound_ThrowException_Test() {
+        when(repository.existsById(5L)).thenReturn(false);
+
+        var exception = assertThrows(ResourceNotFoundException.class, () -> service.deleteClient(5L));
+
+        assertEquals("Client with id 5 not found", exception.getMessage());
+        verify(repository).existsById(5L);
+        verify(repository, never()).deleteById(any());
+    }
+
+    @Test
+    public void getClient_GetClient_Success_Test() {
+        when(repository.findById(1L)).thenReturn(Optional.of(savedClient));
+        when(mapper.toResponse(savedClient)).thenReturn(clientRes);
+
+        var response = service.getClient(1L);
+
+        assertEquals(clientRes, response);
+        verify(repository).findById(1L);
+        verify(mapper).toResponse(savedClient);
+    }
+
+    @Test
+    public void getClient_ClientNotFound_ThrowException_Test() {
+        when(repository.findById(5L)).thenReturn(Optional.empty());
+
+        var exception = assertThrows(ResourceNotFoundException.class, () -> service.getClient(5L));
+
+        assertEquals("Client with id 5 not found", exception.getMessage());
+        verify(repository).findById(5L);
+        verify(mapper, never()).toResponse(any());
+    }
+
+    @Test
+    public void getAllClients_GetAllClients_Success_Test() {
+        setProperty("cpf", "63099738948", savedOtherClient);
+        var clientsList = List.of(savedClient, savedOtherClient);
+        var responseList = List.of(
+                clientRes,
+                new ClientResponse(
+                        savedOtherClient.getId(),
+                        savedOtherClient.getName(),
+                        savedOtherClient.getEmail(),
+                        savedOtherClient.getCpf(),
+                        savedOtherClient.getBirthDate()
+                )
+        );
+        when(repository.findAll()).thenReturn(clientsList);
+        when(mapper.toResponseList(clientsList)).thenReturn(responseList);
+
+        var response = service.getAllClients();
+
+        assertEquals(responseList, response);
+        verify(repository).findAll();
+        verify(mapper).toResponseList(clientsList);
+    }
+
+    @Test
+    public void getAllClients_GetAllClients_EmptyList_Test() {
+        when(repository.findAll()).thenReturn(List.of());
+        when(mapper.toResponseList(List.of())).thenReturn(List.of());
+
+        var response = service.getAllClients();
+
+        assertEquals(List.of(), response);
+        verify(repository).findAll();
+        verify(mapper).toResponseList(List.of());
     }
 }

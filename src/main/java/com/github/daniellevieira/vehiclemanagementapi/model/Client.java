@@ -53,7 +53,7 @@ public class Client {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Client client = (Client) o;
-        return id == client.id;
+        return id != 0 && id == client.id;
     }
 
     @Override
