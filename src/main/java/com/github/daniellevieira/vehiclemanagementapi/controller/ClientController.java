@@ -24,7 +24,6 @@ public class ClientController {
         this.clientService = clientService;
     }
 
-    // TODO teste para quando o client ou campos vem nulo ou incorretos ou cpf repetido (exceções do código e do banco)
     @PostMapping
     public ResponseEntity<ClientResponse> createClient(
             @Valid
