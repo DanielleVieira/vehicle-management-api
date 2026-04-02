@@ -35,7 +35,6 @@ public class ClientController {
         return ResponseEntity.created(location).body(clientRes);
     }
 
-    // TODO teste de cliente não encontrado e id inválido ou nulo
     @GetMapping("/{clientId}")
     public ResponseEntity<ClientResponse> getClient(
             @PathVariable

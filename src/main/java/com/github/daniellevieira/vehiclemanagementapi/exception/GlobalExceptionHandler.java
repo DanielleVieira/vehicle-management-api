@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -74,13 +75,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(Exception ex, HttpServletRequest req) {
-        // TODO registrar log do erro
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest req) {
         return createErrorResponseEntity(
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage(),
                 req.getRequestURI(),
                 List.of()
+        );
+    }
+
+    @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        return createErrorResponseEntity(
+                HttpStatus.BAD_REQUEST,
+                "Invalid parameter: " + ex.getName(),
+                req.getRequestURI(),
+                List.of("Parameter '" + ex.getName() + "' must be of type " + ex.getRequiredType().getSimpleName())
         );
     }
 

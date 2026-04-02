@@ -6,6 +6,7 @@ import com.github.daniellevieira.vehiclemanagementapi.dto.ClientCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientResponse;
 import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.GlobalExceptionHandler;
+import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
 import com.github.daniellevieira.vehiclemanagementapi.service.ClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -152,6 +155,102 @@ public class ClientControllerTest {
                 .andExpect(jsonPath("$.path").value("/api/v1/clients"))
                 .andExpect(jsonPath("$.details").isArray())
                 .andExpect(jsonPath("$.details", hasSize(0)));
+    }
+
+    @Test
+    public void getClient_GetClient_Ok_Test() throws Exception {
+        when(service.getClient(1L)).thenReturn(clientResponse);
+
+        mockMvc.perform(get("/api/v1/clients/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cpf").value("10187236500"))
+                .andExpect(jsonPath("$.birthDate").value("2025-11-07"))
+                .andExpect(jsonPath("$.name").value("MAXI"))
+                .andExpect(jsonPath("$.email").value("maxi@gmail.com"))
+                .andExpect(jsonPath("$.id").value(1L));
+    }
+
+    @Test
+    public void getClient_InvalidId_BadRequest_Test() throws Exception {
+        mockMvc.perform(get("/api/v1/clients/a"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("Invalid parameter")))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.path").value("/api/v1/clients/a"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details", hasSize(greaterThanOrEqualTo(1))));
+    }
+
+    @Test
+    public void getClient_ClientNotFound_NotFound_Test() throws Exception {
+        when(service.getClient(2L)).thenThrow(new ResourceNotFoundException("Client with id 2 not found"));
+
+        mockMvc.perform(get("/api/v1/clients/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Client with id 2 not found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.path").value("/api/v1/clients/2"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details").isEmpty());
+    }
+
+    @Test
+    public void getAllClients_GetClients_Ok_Test() throws Exception {
+        when(service.getAllClients()).thenReturn(Arrays.asList(clientResponse, clientResponse, clientResponse));
+
+        mockMvc.perform(get("/api/v1/clients"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].cpf").value("10187236500"))
+                .andExpect(jsonPath("$[0].birthDate").value("2025-11-07"))
+                .andExpect(jsonPath("$[0].name").value("MAXI"))
+                .andExpect(jsonPath("$[0].email").value("maxi@gmail.com"));
+    }
+
+    @Test
+    public void getAllClients_EmptyList_Ok_Test() throws Exception {
+        when(service.getAllClients()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/clients"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    public void deleteClient_DeleteClient_Ok_Test() throws Exception {
+        mockMvc.perform(delete("/api/v1/clients/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void deleteClient_InvalidId_BadRequest_Test() throws Exception {
+        mockMvc.perform(delete("/api/v1/clients/a"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("Invalid parameter")))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.path").value("/api/v1/clients/a"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details", hasSize(greaterThanOrEqualTo(1))));
+    }
+
+    @Test
+    public void deleteClient_ClientNotFound_NotFound_Test() throws Exception {
+        doThrow(new ResourceNotFoundException("Client with id 2 not found")).when(service).deleteClient(2L);
+
+        mockMvc.perform(delete("/api/v1/clients/2"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Client with id 2 not found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.path").value("/api/v1/clients/2"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details").isEmpty());
     }
 
 
