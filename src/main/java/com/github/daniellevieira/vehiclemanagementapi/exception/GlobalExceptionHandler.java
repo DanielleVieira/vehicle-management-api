@@ -1,6 +1,7 @@
 package com.github.daniellevieira.vehiclemanagementapi.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -94,12 +95,22 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(value = ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, HttpServletRequest req) {
+        return createErrorResponseEntity(
+                HttpStatus.BAD_REQUEST,
+                "Invalid parameter: Please check your request parameters",
+                req.getRequestURI(),
+                ex.getConstraintViolations().stream().map(c -> c.getPropertyPath() + ": " + c.getMessage()).toList()
+        );
+    }
+
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest req) {
         // TODO registrar log do erro
         return createErrorResponseEntity(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                ex.getMessage(),
+                ex.getClass().toString(),
                 req.getRequestURI(),
                 List.of()
         );

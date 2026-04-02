@@ -39,7 +39,7 @@ public class ClientController {
     public ResponseEntity<ClientResponse> getClient(
             @PathVariable
             @NotNull
-            @Positive
+            @Positive(message = "must be greater than 0")
             Long clientId
     ) {
         return ResponseEntity.ok(clientService.getClient(clientId));
@@ -50,24 +50,22 @@ public class ClientController {
         return ResponseEntity.ok(clientService.getAllClients());
     }
 
-    // TODO teste de id inválido ou nulo
     @DeleteMapping("/{clientId}")
     public ResponseEntity deleteClient(
             @PathVariable
             @NotNull
-            @Positive
+            @Positive(message = "must be greater than 0")
             Long clientId
     ) {
         clientService.deleteClient(clientId);
         return ResponseEntity.noContent().build();
     }
 
-    // TODO teste de id inválido ou nulo, e parâmetros incorretos ou usuário inexistente ou cpf repetido;
     @PutMapping("/{clientId}")
     public ResponseEntity<ClientResponse> updateClient(
             @PathVariable
             @NotNull
-            @Positive
+            @Positive(message = "must be greater than 0")
             Long clientId,
             @Valid
             @RequestBody
