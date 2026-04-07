@@ -15,7 +15,7 @@ public class Vehicle {
     private String make;
     @Column(nullable = false, length = 100)
     private String model;
-    @Column(nullable = false, length = 4)
+    @Column(name = "vehicle_year", nullable = false, length = 4)
     private int year;
     @Column(nullable = false, unique = true, length = 7)
     private String licensePlate;
