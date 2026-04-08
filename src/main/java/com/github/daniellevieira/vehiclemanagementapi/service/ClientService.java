@@ -39,6 +39,7 @@ public class ClientService {
         return clientMapper.toResponseList(clients);
     }
 
+    // TODO verificação para regra de negócio na qual só é possível eliminar cliente sem veículo associado
     public void deleteClient(Long id) {
         var exists = clientRepository.existsById(id);
         if (exists) {

@@ -70,7 +70,7 @@ public class VehicleService {
                 .findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle with id " + vehicleId + " not found"));
         validateVehicleYear(vehicleReq.year());
-        vehicle.updateVehicle(
+        vehicle = vehicle.updateVehicle(
                 vehicleReq.make(),
                 vehicleReq.model(),
                 vehicleReq.year(),

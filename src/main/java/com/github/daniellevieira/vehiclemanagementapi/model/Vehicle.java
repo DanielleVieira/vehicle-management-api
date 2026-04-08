@@ -27,37 +27,41 @@ public class Vehicle {
     }
 
     public Vehicle(String make, String model, int year, String licensePlate, Client owner) {
-        setVehicleProperties(make, model, year, licensePlate, owner);
+        setVehicleProperties(this, this.id, make, model, year, licensePlate, owner);
     }
 
-    public void updateVehicle(
+    public Vehicle updateVehicle(
             String newMake,
             String newModel,
             int newYear,
             String newLicensePlate
     ) {
-        setVehicleProperties(newMake, newModel, newYear, newLicensePlate, this.owner);
+        return setVehicleProperties(new Vehicle(), this.id, newMake, newModel, newYear, newLicensePlate, this.owner);
     }
 
-    private void setVehicleProperties(
+    private Vehicle setVehicleProperties(
+            Vehicle vehicle,
+            Long id,
             String make,
             String model,
             int year,
             String licensePlate,
             Client owner
     ) {
-        this.make = Objects.requireNonNull(make)
+        vehicle.id = id;
+        vehicle.make = Objects.requireNonNull(make)
                 .trim()
                 .toUpperCase();
-        this.model = Objects.requireNonNull(model)
+        vehicle.model = Objects.requireNonNull(model)
                 .trim()
                 .toUpperCase();
-        this.year = year;
-        this.licensePlate = Objects.requireNonNull(licensePlate)
+        vehicle.year = year;
+        vehicle.licensePlate = Objects.requireNonNull(licensePlate)
                 .trim()
                 .toUpperCase()
                 .replace("-", "");
-        this.owner = Objects.requireNonNull(owner);
+        vehicle.owner = Objects.requireNonNull(owner);
+        return vehicle;
     }
 
     @Override
