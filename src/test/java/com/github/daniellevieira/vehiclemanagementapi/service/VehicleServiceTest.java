@@ -180,7 +180,7 @@ public class VehicleServiceTest {
 
         var exception = assertThrows(DuplicateResourceException.class, () -> service.createVehicle(vehicleCreateReq));
 
-        assertEquals("Vehicle license plate already registered.", exception.getMessage());
+        assertEquals("Vehicle license plate already registered", exception.getMessage());
         verify(clientRepository).findById(vehicleCreateReq.ownerId());
         verify(vehicleFactory).create(vehicleCreateReq, owner);
         verify(vehicleRepository).findByLicensePlate(vehicle.getLicensePlate());
@@ -200,7 +200,7 @@ public class VehicleServiceTest {
 
         var exception = assertThrows(BusinessException.class, () -> service.createVehicle(invalidRequest));
 
-        assertEquals("The vehicle's year must be a present or past value.", exception.getMessage());
+        assertEquals("The vehicle's year must be a present or past value", exception.getMessage());
         verify(clientRepository, never()).findById(any());
         verify(vehicleFactory, never()).create(any(), any());
         verify(vehicleRepository, never()).findByLicensePlate(any());
@@ -259,7 +259,7 @@ public class VehicleServiceTest {
 
         var exception = assertThrows(DuplicateResourceException.class, () -> service.updateVehicle(1L, duplicatedPlateRequest));
 
-        assertEquals("Vehicle license plate already registered.", exception.getMessage());
+        assertEquals("Vehicle license plate already registered", exception.getMessage());
         verify(vehicleRepository).findById(1L);
         verify(vehicleRepository).findByLicensePlate("XYZ9999");
         verify(vehicleRepository, never()).save(any());
@@ -278,7 +278,7 @@ public class VehicleServiceTest {
 
         var exception = assertThrows(BusinessException.class, () -> service.updateVehicle(1L, invalidRequest));
 
-        assertEquals("The vehicle's year must be a present or past value.", exception.getMessage());
+        assertEquals("The vehicle's year must be a present or past value", exception.getMessage());
         verify(vehicleRepository).findById(1L);
         verify(vehicleRepository, never()).findByLicensePlate(any());
         verify(vehicleRepository, never()).save(any());

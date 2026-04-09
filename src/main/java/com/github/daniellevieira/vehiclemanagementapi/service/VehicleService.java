@@ -90,7 +90,7 @@ public class VehicleService {
     private Vehicle saveVehicle(Vehicle vehicle) {
         var savedVehicle =  vehicleRepository.findByLicensePlate(vehicle.getLicensePlate());
         if(savedVehicle.isPresent() && !vehicle.equals(savedVehicle.get())) {
-            throw new DuplicateResourceException("Vehicle license plate already registered.");
+            throw new DuplicateResourceException("Vehicle license plate already registered");
         } else {
             return vehicleRepository.save(vehicle);
         }
@@ -98,7 +98,7 @@ public class VehicleService {
 
     private void validateVehicleYear(int year) {
         if(year > LocalDate.now().getYear()) {
-            throw new BusinessException("The vehicle's year must be a present or past value.");
+            throw new BusinessException("The vehicle's year must be a present or past value");
         }
     }
 }
