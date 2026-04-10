@@ -1,4 +1,4 @@
-package com.github.daniellevieira.vehiclemanagementapi.controller;
+package com.github.daniellevieira.vehiclemanagementapi.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -7,52 +7,61 @@ import com.github.daniellevieira.vehiclemanagementapi.exception.BusinessExceptio
 import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.GlobalExceptionHandler;
 import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
-import com.github.daniellevieira.vehiclemanagementapi.service.VehicleService;
+import com.github.daniellevieira.vehiclemanagementapi.model.Client;
+import com.github.daniellevieira.vehiclemanagementapi.model.Vehicle;
+import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
+import com.github.daniellevieira.vehiclemanagementapi.repository.VehicleRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(VehicleController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Import(GlobalExceptionHandler.class)
-public class VehicleControllerTest {
+public class VehicleIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
-    @MockitoBean
-    private VehicleService service;
+    @Autowired
+    private VehicleRepository vehicleRepository;
+    @Autowired
+    private ClientRepository clientRepository;
+
     private final ObjectMapper mapper = new ObjectMapper()
             .findAndRegisterModules() // pra conseguir converter LocalDate
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // pra não converter a data como array entre []
 
-    private VehicleCreateRequest vehicleCreateRequest;
-    private VehicleResponse createResponse;
     private VehiclePutRequest vehiclePutRequest;
-    private VehicleResponse updateResponse;
-    private ClientResponse ownerResponse;
+    private ClientCreateRequest clientCreateRequest;
+    private Long ownerId;
 
     @BeforeEach
     public void setup() {
-        vehicleCreateRequest = new VehicleCreateRequest(
-                "Volkswagen",
-                "T-Cross",
-                2025,
-                "ABC-1234",
-                1L
+        clientCreateRequest = new ClientCreateRequest(
+                "Davi",
+                "davi@gmail.com",
+                "527.186.625-49",
+                LocalDate.of(1991, 12, 19)
         );
 
         vehiclePutRequest = new VehiclePutRequest(
@@ -61,50 +70,95 @@ public class VehicleControllerTest {
                 2025,
                 "DEF-1234"
         );
+    }
 
-        ownerResponse = new ClientResponse(
-                1L,
-                "DAVI",
-                "davi@gmail.com",
-                "52718662549",
-                LocalDate.of(1991, 11, 15)
-        );
+    private VehicleResponse getVehicleResponse(MvcResult result) throws Exception {
+        var json = result.getResponse().getContentAsString();
+        return mapper.readValue(json, VehicleResponse.class);
+    }
 
-        createResponse = new VehicleResponse(
-                1L,
-                "VOLKSWAGEN",
-                "T-CROSS",
-                2025,
-                "ABC1234",
-                ownerResponse
-        );
+    private Long postVehicleAndReturnId(VehicleCreateRequest vehicleCreateRequest) throws Exception {
+        var httpResponse = mockMvc.perform(post("/api/v1/vehicles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(vehicleCreateRequest))).andReturn();
+        return getVehicleResponse(httpResponse).id();
+    }
 
-        updateResponse = new VehicleResponse(
-                1L,
-                "VOLKSWAGEN",
-                "T-CROSS",
-                2025,
-                "DEF1234",
-                ownerResponse
-        );
+    private ClientResponse getClientResponse(MvcResult result) throws Exception {
+        var json = result.getResponse().getContentAsString();
+        return mapper.readValue(json, ClientResponse.class);
+    }
+
+    private Long postClientAndReturnId(ClientCreateRequest clientCreateRequest) throws Exception {
+        var httpResponse = mockMvc.perform(post("/api/v1/clients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(clientCreateRequest))).andReturn();
+        return getClientResponse(httpResponse).id();
     }
 
     @Test
+    @Transactional
     public void createVehicle_PostVehicle_Created_Test() throws Exception {
-        when(service.createVehicle(vehicleCreateRequest)).thenReturn(createResponse);
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
 
-        mockMvc.perform(post("/api/v1/vehicles")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(vehicleCreateRequest)))
+        var httpResponse = mockMvc.perform(post("/api/v1/vehicles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(vehicleCreateRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/v1/vehicles/1")))
-                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(header().string("Location", containsString("/api/v1/vehicles/")))
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.make").value("VOLKSWAGEN"))
                 .andExpect(jsonPath("$.model").value("T-CROSS"))
                 .andExpect(jsonPath("$.licensePlate").value("ABC1234"))
                 .andExpect(jsonPath("$.year").value("2025"))
-                .andExpect(jsonPath("$.owner.id").value(1L));
+                .andExpect(jsonPath("$.owner.id").value(ownerId))
+                .andReturn();
 
+        var response = getVehicleResponse(httpResponse);
+
+        assertTrue(response.id() > 0);
+        assertTrue(httpResponse.getResponse().getHeader("Location").contains("api/v1/vehicles/"+response.id()));
+
+    }
+
+    @Test
+    public void createVehicle_PostVehicleWithoutTransactional_Created_Test() throws Exception {
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+
+        var httpResponse = mockMvc.perform(post("/api/v1/vehicles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(vehicleCreateRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", containsString("/api/v1/vehicles/")))
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.make").value("VOLKSWAGEN"))
+                .andExpect(jsonPath("$.model").value("T-CROSS"))
+                .andExpect(jsonPath("$.licensePlate").value("ABC1234"))
+                .andExpect(jsonPath("$.year").value("2025"))
+                .andExpect(jsonPath("$.owner.id").value(ownerId))
+                .andReturn();
+
+        var response = getVehicleResponse(httpResponse);
+
+        assertTrue(response.id() > 0);
+        assertTrue(httpResponse.getResponse().getHeader("Location").contains("api/v1/vehicles/"+response.id()));
+
+        vehicleRepository.deleteAll();
+        clientRepository.deleteAll();
     }
 
     @Test
@@ -172,8 +226,17 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void createVehicle_DuplicatedLicensePlate_Conflict_Test() throws Exception {
-        when(service.createVehicle(vehicleCreateRequest)).thenThrow(new DuplicateResourceException("Vehicle license plate already registered"));
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        postVehicleAndReturnId(vehicleCreateRequest);
 
         mockMvc.perform(post("/api/v1/vehicles")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -197,8 +260,6 @@ public class VehicleControllerTest {
                 1L
         );
 
-        when(service.createVehicle(invalidCreateRequest)).thenThrow(new BusinessException("The vehicle's year must be a present or past value"));
-
         mockMvc.perform(post("/api/v1/vehicles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(invalidCreateRequest)))
@@ -212,17 +273,26 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void getVehicle_GetVehicle_Ok_Test() throws Exception {
-        when(service.getVehicle(1L)).thenReturn(createResponse);
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
 
-        mockMvc.perform(get("/api/v1/vehicles/1"))
+        mockMvc.perform(get("/api/v1/vehicles/" + vehicleId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.make").value("VOLKSWAGEN"))
                 .andExpect(jsonPath("$.model").value("T-CROSS"))
                 .andExpect(jsonPath("$.year").value(2025))
                 .andExpect(jsonPath("$.licensePlate").value("ABC1234"))
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.owner.id").value(1L));
+                .andExpect(jsonPath("$.id").value(vehicleId))
+                .andExpect(jsonPath("$.owner.id").value(ownerId));
     }
 
     @Test
@@ -239,8 +309,6 @@ public class VehicleControllerTest {
 
     @Test
     public void getVehicle_VehicleNotFound_NotFound_Test() throws Exception {
-        when(service.getVehicle(2L)).thenThrow(new ResourceNotFoundException("Vehicle with id 2 not found"));
-
         mockMvc.perform(get("/api/v1/vehicles/2"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Vehicle with id 2 not found"))
@@ -252,25 +320,32 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void getAllVehicles_GetVehicles_Ok_Test() throws Exception {
-        when(service.getAllVehicles()).thenReturn(Arrays.asList(createResponse, createResponse, createResponse));
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
 
         mockMvc.perform(get("/api/v1/vehicles"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(vehicleId))
                 .andExpect(jsonPath("$[0].licensePlate").value("ABC1234"))
                 .andExpect(jsonPath("$[0].year").value(2025))
                 .andExpect(jsonPath("$[0].make").value("VOLKSWAGEN"))
                 .andExpect(jsonPath("$[0].model").value("T-CROSS"))
-                .andExpect(jsonPath("$[0].owner.id").value(1L));;
+                .andExpect(jsonPath("$[0].owner.id").value(ownerId));;
     }
 
     @Test
     public void getAllClients_EmptyList_Ok_Test() throws Exception {
-        when(service.getAllVehicles()).thenReturn(List.of());
-
         mockMvc.perform(get("/api/v1/vehicles"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -278,25 +353,35 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void getAllVehicles_WithOwnerId_Ok_Test() throws Exception {
-        when(service.getVehiclesByOwnerId(1L)).thenReturn(Arrays.asList(createResponse, updateResponse));
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
 
         mockMvc.perform(get("/api/v1/vehicles")
-                        .param("ownerId", "1"))
+                        .param("ownerId", ownerId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].owner.id").value(1L))
-                .andExpect(jsonPath("$[1].licensePlate").value("DEF1234"));
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(vehicleId))
+                .andExpect(jsonPath("$[0].owner.id").value(ownerId))
+                .andExpect(jsonPath("$[0].licensePlate").value("ABC1234"));
     }
 
     @Test
+    @Transactional
     public void getAllVehicles_WithOwnerId_EmptyList_Ok_Test() throws Exception {
-        when(service.getVehiclesByOwnerId(1L)).thenReturn(List.of());
+        var ownerId = postClientAndReturnId(clientCreateRequest);
 
         mockMvc.perform(get("/api/v1/vehicles")
-                        .param("ownerId", "1"))
+                        .param("ownerId", ownerId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
@@ -317,8 +402,6 @@ public class VehicleControllerTest {
 
     @Test
     public void getAllVehicles_OwnerNotFound_NotFound_Test() throws Exception {
-        when(service.getVehiclesByOwnerId(2L)).thenThrow(new ResourceNotFoundException("Owner with id 2 not found"));
-
         mockMvc.perform(get("/api/v1/vehicles")
                         .param("ownerId", "2"))
                 .andExpect(status().isNotFound())
@@ -331,8 +414,19 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void deleteVehicle_DeleteVehicle_Ok_Test() throws Exception {
-        mockMvc.perform(delete("/api/v1/vehicles/1"))
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
+
+        mockMvc.perform(delete("/api/v1/vehicles/" + vehicleId))
                 .andExpect(status().isNoContent());
     }
 
@@ -350,8 +444,6 @@ public class VehicleControllerTest {
 
     @Test
     public void deleteVehicle_VehicleNotFound_NotFound_Test() throws Exception {
-        doThrow(new ResourceNotFoundException("Vehicle with id 2 not found")).when(service).deleteVehicle(2L);
-
         mockMvc.perform(delete("/api/v1/vehicles/2"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Vehicle with id 2 not found"))
@@ -363,20 +455,56 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void updateVehicle_UpdateVehicle_Ok_Test() throws Exception {
-        when(service.updateVehicle(1L, vehiclePutRequest)).thenReturn(updateResponse);
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
 
-        mockMvc.perform(put("/api/v1/vehicles/1")
+        mockMvc.perform(put("/api/v1/vehicles/" + vehicleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(vehiclePutRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.id").value(vehicleId))
                 .andExpect(jsonPath("$.make").value("VOLKSWAGEN"))
                 .andExpect(jsonPath("$.model").value("T-CROSS"))
                 .andExpect(jsonPath("$.licensePlate").value("DEF1234"))
                 .andExpect(jsonPath("$.year").value(2025))
                 .andExpect(jsonPath("$.owner").exists());
 
+    }
+
+    @Test
+    public void updateVehicle_UpdateVehicleWithoutTransactional_Ok_Test() throws Exception {
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
+
+        mockMvc.perform(put("/api/v1/vehicles/" + vehicleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(vehiclePutRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(vehicleId))
+                .andExpect(jsonPath("$.make").value("VOLKSWAGEN"))
+                .andExpect(jsonPath("$.model").value("T-CROSS"))
+                .andExpect(jsonPath("$.licensePlate").value("DEF1234"))
+                .andExpect(jsonPath("$.year").value(2025))
+                .andExpect(jsonPath("$.owner").exists());
+
+        vehicleRepository.deleteAll();
+        clientRepository.deleteAll();
     }
 
     @Test
@@ -443,17 +571,34 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void updateVehicle_DuplicatedLicensePlate_Conflict_Test() throws Exception {
-        when(service.updateVehicle(1L, vehiclePutRequest)).thenThrow(new DuplicateResourceException("Vehicle license plate already registered"));
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleReq = new VehicleCreateRequest(
+                "Chevrolet",
+                "Tracker",
+                2025,
+                "DEF-1234",
+                ownerId
+        );
+        var otherVehicleId = postVehicleAndReturnId(vehicleReq);
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
 
-        mockMvc.perform(put("/api/v1/vehicles/1")
+        mockMvc.perform(put("/api/v1/vehicles/" + vehicleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(vehiclePutRequest)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Vehicle license plate already registered"))
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.path").value("/api/v1/vehicles/1"))
+                .andExpect(jsonPath("$.path").value("/api/v1/vehicles/" + vehicleId))
                 .andExpect(jsonPath("$.details").isArray())
                 .andExpect(jsonPath("$.details", hasSize(0)));
     }
@@ -474,8 +619,6 @@ public class VehicleControllerTest {
 
     @Test
     public void updateVehicle_VehicleNotFound_NotFound_Test() throws Exception {
-        when(service.updateVehicle(2L, vehiclePutRequest)).thenThrow(new ResourceNotFoundException("Vehicle with id 2 not found"));
-
         mockMvc.perform(put("/api/v1/vehicles/2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(vehiclePutRequest)))
@@ -489,7 +632,17 @@ public class VehicleControllerTest {
     }
 
     @Test
+    @Transactional
     public void updateVehicle_VehicleYearInFuture_UnprocessableContent_Test() throws Exception {
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
         var invalidPutRequest = new VehiclePutRequest(
                 "Volkswagen",
                 "T-Cross",
@@ -497,16 +650,14 @@ public class VehicleControllerTest {
                 "ABC-1234"
         );
 
-        when(service.updateVehicle(1L, invalidPutRequest)).thenThrow(new BusinessException("The vehicle's year must be a present or past value"));
-
-        mockMvc.perform(put("/api/v1/vehicles/1")
+        mockMvc.perform(put("/api/v1/vehicles/" + vehicleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(invalidPutRequest)))
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.message").value("The vehicle's year must be a present or past value"))
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.error").value("Unprocessable Content"))
-                .andExpect(jsonPath("$.path").value("/api/v1/vehicles/1"))
+                .andExpect(jsonPath("$.path").value("/api/v1/vehicles/" + vehicleId))
                 .andExpect(jsonPath("$.details").isArray())
                 .andExpect(jsonPath("$.details", hasSize(0)));
     }

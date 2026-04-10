@@ -86,7 +86,7 @@ public class ClientIntegrationTest {
 
     @Test
     @Transactional
-    public void createClient_PostClientWithoutTransactional_Created_Test() throws Exception {
+    public void createClient_PostClient_Created_Test() throws Exception {
         var httpResponse = mockMvc.perform(post("/api/v1/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(clientCreateRequest)))
@@ -106,7 +106,7 @@ public class ClientIntegrationTest {
 
     // teste sem o transactional pra testar com o commit do banco
     @Test
-    public void createClient_PostClient_Created_Test() throws Exception {
+    public void createClient_PostClientWithoutTransactional_Created_Test() throws Exception {
         var httpResponse = mockMvc.perform(post("/api/v1/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(clientCreateRequest)))
