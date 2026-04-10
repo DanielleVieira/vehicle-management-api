@@ -1,20 +1,21 @@
 # Vehicle Management API
 
-API REST para gerenciamento de clientes e veiculos, construída com Java 25, Spring Boot, Spring Data JPA e MySQL.
+API REST para gerenciamento de clientes e veículos, construída com Java 25, Spring Boot, Spring Data JPA e MySQL.
 
 ## Visão Geral
 
-A aplicação expõe endpoints para:
+A aplicação expõe operações para:
 
 - cadastrar, consultar, atualizar e remover clientes;
-- cadastrar, consultar, atualizar e remover veiculos;
-- listar veiculos de um proprietário específico.
+- cadastrar, consultar, atualizar e remover veículos;
+- listar veículos por proprietário com `GET /api/v1/vehicles?ownerId={ownerId}`.
 
-Algumas normalizações acontecem automaticamente antes da persistência:
+Antes da persistência, a aplicação normaliza alguns campos automaticamente:
 
 - `name`, `make`, `model` e `licensePlate` são gravados em maiúsculas;
 - `email` é gravado em minúsculas;
-- `cpf` e `licensePlate` são salvos sem pontuação.
+- `cpf` é salvo sem pontos, hífen ou espaços;
+- `licensePlate` é salva sem hífen.
 
 ## Stack
 
@@ -24,10 +25,11 @@ Algumas normalizações acontecem automaticamente antes da persistência:
 - Spring Data JPA / Hibernate
 - Bean Validation
 - MySQL
+- H2 Database para testes
 - MapStruct 1.5.5.Final
 - Lombok
-- Springdoc OpenAPI
-- Gradle 9.3.1 Wrapper
+- Springdoc OpenAPI 3.0.2
+- Gradle Wrapper 9.3.1
 
 ## Requisitos
 
@@ -36,7 +38,9 @@ Algumas normalizações acontecem automaticamente antes da persistência:
 
 ## Configuração
 
-A aplicação lê a conexão com o banco a partir destas variáveis de ambiente:
+A configuração principal está em [src/main/resources/application.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application.yaml).
+
+A aplicação espera as seguintes variáveis de ambiente para conectar ao MySQL:
 
 - `URL_DB`
 - `USER_DB`
@@ -50,7 +54,7 @@ export USER_DB=root
 export PASSWORD_DB=secret
 ```
 
-O datasource é configurado em [application.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application.yaml).
+Os testes usam o perfil `test` com banco H2 em memória, definido em [src/main/resources/application-test.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application-test.yaml).
 
 ## Como Executar
 
@@ -60,7 +64,7 @@ Subir a aplicação:
 ./gradlew bootRun
 ```
 
-Executar os testes:
+Executar todos os testes:
 
 ```bash
 ./gradlew test
@@ -73,6 +77,8 @@ Executar um teste específico:
 ```
 
 ## Documentação da API
+
+Com a aplicação em execução:
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
@@ -100,7 +106,7 @@ Payload de criação e atualização:
 }
 ```
 
-Exemplo de resposta:
+Resposta de exemplo:
 
 ```json
 {
@@ -144,7 +150,7 @@ Payload de atualização:
 }
 ```
 
-Exemplo de resposta:
+Resposta de exemplo:
 
 ```json
 {
@@ -167,20 +173,20 @@ Exemplo de resposta:
 
 ### Clientes
 
-- `name`: obrigatório, entre 3 e 100 caracteres.
-- `email`: obrigatório, email válido, até 255 caracteres.
-- `cpf`: obrigatório e válido no padrão CPF.
-- `birthDate`: obrigatória e deve estar no passado.
-- `clientId`: obrigatório nos endpoints com path parameter e deve ser positivo.
+- `name`: obrigatório, entre 3 e 100 caracteres;
+- `email`: obrigatório, formato válido, até 255 caracteres;
+- `cpf`: obrigatório e válido;
+- `birthDate`: obrigatória e deve estar no passado;
+- `clientId`: deve ser positivo nos endpoints com path parameter.
 
 ### Veículos
 
-- `make`: obrigatório, entre 3 e 50 caracteres.
-- `model`: obrigatório, entre 3 e 100 caracteres.
-- `year`: obrigatório e mínimo `1886`.
-- `licensePlate`: obrigatória, entre 7 e 8 caracteres, formato brasileiro antigo ou Mercosul.
-- `ownerId`: obrigatório no `POST /vehicles` e deve ser positivo.
-- `vehicleId`: obrigatório nos endpoints com path parameter e deve ser positivo.
+- `make`: obrigatório, entre 3 e 50 caracteres;
+- `model`: obrigatório, entre 3 e 100 caracteres;
+- `year`: obrigatório e mínimo `1886`;
+- `licensePlate`: obrigatória e deve seguir o padrão brasileiro antigo ou Mercosul;
+- `ownerId`: obrigatório no `POST /vehicles` e deve ser positivo;
+- `vehicleId`: deve ser positivo nos endpoints com path parameter.
 
 ## Regras de Negócio
 
@@ -188,7 +194,7 @@ Exemplo de resposta:
 - não é possível cadastrar ou atualizar veículo com placa já existente;
 - o ano do veículo não pode ser maior que o ano atual;
 - um veículo só pode ser criado para um cliente existente;
-- a consulta `GET /vehicles?ownerId={ownerId}` exige que o proprietário exista;
+- a listagem `GET /vehicles?ownerId={ownerId}` exige que o proprietário exista;
 - o `PUT /vehicles/{vehicleId}` não permite alterar o proprietário.
 
 ## Tratamento de Erros
@@ -197,28 +203,33 @@ A API retorna uma estrutura padronizada para erros:
 
 ```json
 {
-  "timestamp": "2026-04-02T12:00:00",
+  "timestamp": "2026-04-10T12:00:00",
   "status": 400,
   "error": "Bad Request",
   "message": "Validation failed. Please check your request parameters",
   "path": "/api/v1/vehicles",
   "details": [
-    "licensePlate: Deve seguir o padrão brasileiro antigo ou Mercosul"
+    "licensePlate: must follow the old Brazilian standard or Mercosur standard."
   ]
 }
 ```
 
-Principais status retornados:
+Principais respostas:
 
-- `400 Bad Request`: erro de validação, tipo inválido ou request malformado;
-- `404 Not Found`: recurso não encontrado;
+- `400 Bad Request`: erro de validação, body ausente, parâmetro inválido ou JSON malformado;
+- `404 Not Found`: cliente, veículo ou proprietário não encontrado;
 - `409 Conflict`: CPF ou placa já cadastrados;
-- `422 Unprocessable Content`: violação de regra de negócio.
+- `422 Unprocessable Content`: violação de regra de negócio, como ano futuro.
 
-## Testes Existentes
+## Testes
 
-Atualmente o projeto possui testes para:
+O projeto possui testes de:
 
-- contexto da aplicação;
-- `ClientController`;
-- `ClientService`.
+- controller de clientes;
+- controller de veículos;
+- service de clientes;
+- service de veículos;
+- integração dos fluxos de clientes;
+- integração dos fluxos de veículos.
+
+Os testes automatizados usam H2 em memória com o perfil `test`.
