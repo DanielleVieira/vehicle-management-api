@@ -68,7 +68,7 @@ public class Vehicle {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Vehicle vehicle = (Vehicle) o;
-        return id == vehicle.id;
+        return id != 0 && id == vehicle.id;
     }
 
     @Override
