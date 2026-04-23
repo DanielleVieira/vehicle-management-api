@@ -1,4 +1,4 @@
-package com.github.daniellevieira.vehiclemanagementapi.service.auth;
+package com.github.daniellevieira.vehiclemanagementapi.security.auth;
 
 import com.github.daniellevieira.vehiclemanagementapi.model.auth.User;
 import io.jsonwebtoken.Claims;
@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -53,14 +54,12 @@ public class JwtService {
                 .getPayload();
     }
 
-    // TODO tratar exceção de token expirado
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    // TODO tratar exceção de token mal formado ou alterado
-    public boolean isTokenValid(String token, User user) {
-        var userEmail = extractUsername(token);
-        return userEmail.equals(user.getEmail()) && !isTokenExpired(token);
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        var username = extractUsername(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 }

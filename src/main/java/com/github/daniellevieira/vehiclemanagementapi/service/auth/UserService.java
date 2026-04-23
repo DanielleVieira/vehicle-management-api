@@ -8,6 +8,7 @@ import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFound
 import com.github.daniellevieira.vehiclemanagementapi.mapper.auth.UserMapper;
 import com.github.daniellevieira.vehiclemanagementapi.model.auth.User;
 import com.github.daniellevieira.vehiclemanagementapi.repository.auth.UserRepository;
+import com.github.daniellevieira.vehiclemanagementapi.security.auth.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
