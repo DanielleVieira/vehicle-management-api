@@ -3,6 +3,7 @@ package com.github.daniellevieira.vehiclemanagementapi.service.auth;
 import com.github.daniellevieira.vehiclemanagementapi.dto.auth.LoginRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.auth.LoginResponse;
 import com.github.daniellevieira.vehiclemanagementapi.dto.auth.UserCreateRequest;
+import com.github.daniellevieira.vehiclemanagementapi.dto.auth.UserResponse;
 import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
 import com.github.daniellevieira.vehiclemanagementapi.mapper.auth.UserMapper;
@@ -77,4 +78,14 @@ public class UserService {
             return userRepository.save(newUser.updateUser(newUser.getEmail(), encodedPassword, newUser.getRole()));
         }
     }
+
+    public UserResponse getUser(Long userId) {
+        var user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " not found"));
+        return userMapper.toResponse(user);
+    }
+
+    // TODO updateUser
+    // TODO deleteUser
 }
