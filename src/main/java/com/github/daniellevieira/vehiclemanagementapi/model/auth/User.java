@@ -43,6 +43,10 @@ public class User implements UserDetails {
         return setProperties(new User(), this.id, newEmail, newPassword, newRole);
     }
 
+    public User promoteToAdmin() {
+        return updateUser(email, password, Role.ADMIN);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
