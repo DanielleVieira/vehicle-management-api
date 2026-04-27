@@ -5,6 +5,8 @@ import com.github.daniellevieira.vehiclemanagementapi.dto.auth.LoginResponse;
 import com.github.daniellevieira.vehiclemanagementapi.dto.auth.UserCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.service.auth.UserService;
 import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +26,7 @@ public class AuthController {
         this.userService = userService;
     }
 
+    @SecurityRequirements
     @PostMapping("/signup")
     public ResponseEntity<LoginResponse> register(
             @Valid
@@ -34,6 +37,7 @@ public class AuthController {
         return ResponseEntity.ok(loginResponse);
     }
 
+    @SecurityRequirements
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid
