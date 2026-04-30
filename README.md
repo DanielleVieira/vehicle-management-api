@@ -1,21 +1,6 @@
 # Vehicle Management API
 
-API REST para gerenciamento de clientes e veículos, construída com Java 25, Spring Boot, Spring Data JPA e MySQL.
-
-## Visão Geral
-
-A aplicação expõe operações para:
-
-- cadastrar, consultar, atualizar e remover clientes;
-- cadastrar, consultar, atualizar e remover veículos;
-- listar veículos por proprietário com `GET /api/v1/vehicles?ownerId={ownerId}`.
-
-Antes da persistência, a aplicação normaliza alguns campos automaticamente:
-
-- `name`, `make`, `model` e `licensePlate` são gravados em maiúsculas;
-- `email` é gravado em minúsculas;
-- `cpf` é salvo sem pontos, hífen ou espaços;
-- `licensePlate` é salva sem hífen.
+API REST para gerenciamento de clientes, veículos e usuários com autenticação JWT.
 
 ## Stack
 
@@ -23,13 +8,24 @@ Antes da persistência, a aplicação normaliza alguns campos automaticamente:
 - Spring Boot 4.0.3
 - Spring Web MVC
 - Spring Data JPA / Hibernate
+- Spring Security
+- JWT (`jjwt` 0.13.0)
 - Bean Validation
 - MySQL
-- H2 Database para testes
-- MapStruct 1.5.5.Final
+- H2 para testes
+- MapStruct
 - Lombok
-- Springdoc OpenAPI 3.0.2
-- Gradle Wrapper 9.3.1
+- Springdoc OpenAPI
+- Gradle Wrapper
+
+## O que a API faz
+
+- CRUD de clientes
+- CRUD de veículos
+- listagem de veículos por proprietário com `GET /api/v1/vehicles?ownerId={ownerId}`
+- cadastro e login de usuários
+- consulta de usuário por id
+- controle de acesso com JWT e perfis `USER` e `ADMIN`
 
 ## Requisitos
 
@@ -38,13 +34,16 @@ Antes da persistência, a aplicação normaliza alguns campos automaticamente:
 
 ## Configuração
 
-A configuração principal está em [src/main/resources/application.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application.yaml).
+As configurações principais ficam em [application.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application.yaml) e [application-test.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application-test.yaml).
 
-A aplicação espera as seguintes variáveis de ambiente para conectar ao MySQL:
+Defina estas variáveis de ambiente antes de subir a aplicação:
 
 - `URL_DB`
 - `USER_DB`
 - `PASSWORD_DB`
+- `SECRET_JWT`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
 
 Exemplo:
 
@@ -52,28 +51,35 @@ Exemplo:
 export URL_DB=jdbc:mysql://localhost:3306/vehicle_management
 export USER_DB=root
 export PASSWORD_DB=secret
+export SECRET_JWT=ZmFrZVNlY3JldEZvclRlc3RzRmFrZVNlY3JldEZvclRlc3RzMTIzNDU2
+export ADMIN_USERNAME=admin@local
+export ADMIN_PASSWORD=admin12345
 ```
 
-Os testes usam o perfil `test` com banco H2 em memória, definido em [src/main/resources/application-test.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application-test.yaml).
+Observações:
 
-## Como Executar
+- `SECRET_JWT` precisa estar em Base64, porque a chave é carregada com `Decoders.BASE64.decode(...)`.
+- Ao iniciar a aplicação, um usuário administrador é criado ou promovido para `ADMIN` com base em `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
+- O token JWT expira em 30 minutos.
 
-Subir a aplicação:
+## Como executar com Gradle
+
+Subir a API:
 
 ```bash
 ./gradlew bootRun
 ```
 
-Executar todos os testes:
+Gerar o artefato:
 
 ```bash
-./gradlew test
+./gradlew build
 ```
 
-Executar um teste específico:
+Executar a aplicação empacotada:
 
 ```bash
-./gradlew test --tests com.github.daniellevieira.vehiclemanagementapi.controller.ClientControllerTest
+java -jar build/libs/vehicle-management-api-0.0.1-SNAPSHOT.jar
 ```
 
 ## Documentação da API
@@ -83,9 +89,67 @@ Com a aplicação em execução:
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
+## Autenticação e autorização
+
+Rotas públicas:
+
+- `POST /api/v1/auth/signup`
+- `POST /api/v1/auth/login`
+- Swagger/OpenAPI
+
+Todas as outras rotas exigem token JWT no cabeçalho:
+
+```http
+Authorization: Bearer <token>
+```
+
+Regras de acesso:
+
+- `DELETE /api/v1/clients/**`: somente `ADMIN`
+- `DELETE /api/v1/vehicles/**`: somente `ADMIN`
+- `/api/v1/users/**`: somente `ADMIN`
+- demais rotas autenticadas: `USER` ou `ADMIN`
+
+O CORS está liberado para:
+
+- `http://localhost:3000`
+- `http://localhost:5173`
+
 ## Endpoints
 
 Base URL: `/api/v1`
+
+### Auth
+
+- `POST /auth/signup`
+- `POST /auth/login`
+
+Exemplo de cadastro/login:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+Exemplo de resposta:
+
+```json
+{
+  "token": "<jwt>",
+  "type": "Bearer",
+  "userResponse": {
+    "id": 1,
+    "email": "user@example.com",
+    "role": "USER"
+  }
+}
+```
+
+### Usuários
+
+- `GET /users/{userId}` (`ADMIN`)
 
 ### Clientes
 
@@ -93,9 +157,9 @@ Base URL: `/api/v1`
 - `GET /clients`
 - `GET /clients/{clientId}`
 - `PUT /clients/{clientId}`
-- `DELETE /clients/{clientId}`
+- `DELETE /clients/{clientId}` (`ADMIN`)
 
-Payload de criação e atualização:
+Payload:
 
 ```json
 {
@@ -106,7 +170,7 @@ Payload de criação e atualização:
 }
 ```
 
-Resposta de exemplo:
+Resposta:
 
 ```json
 {
@@ -125,7 +189,7 @@ Resposta de exemplo:
 - `GET /vehicles/{vehicleId}`
 - `GET /vehicles?ownerId={ownerId}`
 - `PUT /vehicles/{vehicleId}`
-- `DELETE /vehicles/{vehicleId}`
+- `DELETE /vehicles/{vehicleId}` (`ADMIN`)
 
 Payload de criação:
 
@@ -150,7 +214,7 @@ Payload de atualização:
 }
 ```
 
-Resposta de exemplo:
+Resposta:
 
 ```json
 {
@@ -169,37 +233,47 @@ Resposta de exemplo:
 }
 ```
 
-## Regras de Validação
+## Regras de validação
+
+### Auth e usuários
+
+- `email`: obrigatório, formato válido, até 255 caracteres
+- `password`: obrigatória, entre 8 e 72 caracteres
 
 ### Clientes
 
-- `name`: obrigatório, entre 3 e 100 caracteres;
-- `email`: obrigatório, formato válido, até 255 caracteres;
-- `cpf`: obrigatório e válido;
-- `birthDate`: obrigatória e deve estar no passado;
-- `clientId`: deve ser positivo nos endpoints com path parameter.
+- `name`: obrigatório, entre 3 e 100 caracteres
+- `email`: obrigatório, formato válido, até 255 caracteres
+- `cpf`: obrigatório e válido
+- `birthDate`: obrigatória e deve estar no passado
+- `clientId`: deve ser positivo
 
 ### Veículos
 
-- `make`: obrigatório, entre 3 e 50 caracteres;
-- `model`: obrigatório, entre 3 e 100 caracteres;
-- `year`: obrigatório e mínimo `1886`;
-- `licensePlate`: obrigatória e deve seguir o padrão brasileiro antigo ou Mercosul;
-- `ownerId`: obrigatório no `POST /vehicles` e deve ser positivo;
-- `vehicleId`: deve ser positivo nos endpoints com path parameter.
+- `make`: obrigatória, entre 3 e 50 caracteres
+- `model`: obrigatório, entre 3 e 100 caracteres
+- `year`: obrigatório e mínimo `1886`
+- `licensePlate`: obrigatória e deve seguir o padrão brasileiro antigo ou Mercosul
+- `ownerId`: obrigatório no `POST /vehicles` e deve ser positivo
+- `vehicleId`: deve ser positivo
 
-## Regras de Negócio
+## Regras de negócio
 
-- não é possível cadastrar ou atualizar cliente com CPF já existente;
-- não é possível cadastrar ou atualizar veículo com placa já existente;
-- o ano do veículo não pode ser maior que o ano atual;
-- um veículo só pode ser criado para um cliente existente;
-- a listagem `GET /vehicles?ownerId={ownerId}` exige que o proprietário exista;
-- o `PUT /vehicles/{vehicleId}` não permite alterar o proprietário.
+- `name`, `make` e `model` são persistidos em maiúsculas
+- `email` é persistido em minúsculas
+- `cpf` é persistido sem pontos, espaços ou hífen
+- `licensePlate` é persistida em maiúsculas e sem hífen
+- não é possível cadastrar ou atualizar cliente com CPF já registrado
+- não é possível cadastrar ou atualizar usuário com email já registrado
+- não é possível cadastrar ou atualizar veículo com placa já registrada
+- o ano do veículo não pode ser maior que o ano atual
+- um veículo só pode ser criado para um cliente existente
+- `GET /vehicles?ownerId={ownerId}` exige que o proprietário exista
+- o `PUT /vehicles/{vehicleId}` não permite alterar o proprietário
 
-## Tratamento de Erros
+## Respostas de erro
 
-A API retorna uma estrutura padronizada para erros:
+A API retorna um payload padrão:
 
 ```json
 {
@@ -214,22 +288,12 @@ A API retorna uma estrutura padronizada para erros:
 }
 ```
 
-Principais respostas:
+Códigos mais comuns:
 
-- `400 Bad Request`: erro de validação, body ausente, parâmetro inválido ou JSON malformado;
-- `404 Not Found`: cliente, veículo ou proprietário não encontrado;
-- `409 Conflict`: CPF ou placa já cadastrados;
-- `422 Unprocessable Content`: violação de regra de negócio, como ano futuro.
-
-## Testes
-
-O projeto possui testes de:
-
-- controller de clientes;
-- controller de veículos;
-- service de clientes;
-- service de veículos;
-- integração dos fluxos de clientes;
-- integração dos fluxos de veículos.
-
-Os testes automatizados usam H2 em memória com o perfil `test`.
+- `400 Bad Request`: validação, JSON inválido ou parâmetro inválido
+- `401 Unauthorized`: token ausente, inválido ou credenciais incorretas
+- `403 Forbidden`: usuário autenticado sem permissão
+- `404 Not Found`: recurso não encontrado
+- `409 Conflict`: CPF, email ou placa duplicados; ou violação de integridade no banco
+- `422 Unprocessable Content`: regra de negócio violada, como ano maior que o atual
+- `500 Internal Server Error`: falha não tratada

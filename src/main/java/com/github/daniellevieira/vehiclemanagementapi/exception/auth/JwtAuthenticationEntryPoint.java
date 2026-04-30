@@ -36,7 +36,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                 request.getRequestURI(),
                 List.of()
         );
-        System.out.println("Passou aqui!!!!!!!!!!!!!!!!!!!!!!!");
         response
                 .getWriter()
                 .write(mapper.writeValueAsString(error));
