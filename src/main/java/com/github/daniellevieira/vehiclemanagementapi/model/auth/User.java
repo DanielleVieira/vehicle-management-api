@@ -34,7 +34,7 @@ public class User implements UserDetails {
     private User setProperties(User newUser, Long id, String newEmail, String newPassword, Role newRole) {
         newUser.id = id;
         newUser.email = Objects.requireNonNull(newEmail).trim().toLowerCase();
-        newUser.password = Objects.requireNonNull(newPassword).trim();
+        newUser.password = Objects.requireNonNull(newPassword);
         newUser.role = Objects.requireNonNull(newRole);
         return newUser;
     }

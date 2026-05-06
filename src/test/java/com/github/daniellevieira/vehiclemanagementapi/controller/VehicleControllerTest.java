@@ -7,10 +7,13 @@ import com.github.daniellevieira.vehiclemanagementapi.exception.BusinessExceptio
 import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.GlobalExceptionHandler;
 import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
+import com.github.daniellevieira.vehiclemanagementapi.security.auth.JwtAuthenticationFilter;
+import com.github.daniellevieira.vehiclemanagementapi.security.auth.JwtService;
 import com.github.daniellevieira.vehiclemanagementapi.service.VehicleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -29,12 +32,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(VehicleController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 public class VehicleControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @MockitoBean
     private VehicleService service;
+    @MockitoBean
+    private JwtService jwtService;
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     private final ObjectMapper mapper = new ObjectMapper()
             .findAndRegisterModules() // pra conseguir converter LocalDate
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // pra não converter a data como array entre []
