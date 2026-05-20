@@ -8,6 +8,11 @@ import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +29,6 @@ public class VehicleController {
         this.vehicleService = vehicleService;
     }
 
-    // TODO teste para quando o vehicle ou campos vem nulo ou incorretos e quando clientId é incorreto e placa repetida no banco
     @PostMapping
     public ResponseEntity<VehicleResponse> createVehicle(
             @Valid
@@ -36,20 +40,22 @@ public class VehicleController {
         return ResponseEntity.created(location).body(vehicleResponse);
     }
 
-    // TODO teste pro caso de ownerId inválido, ou owner não encontrado
+    // TODO testes e handle para o caso de PropertyReferenceException do pageable
     @GetMapping
-    public ResponseEntity<List<VehicleResponse>> getAllVehicles(
+    public ResponseEntity<Page<VehicleResponse>> getAllVehicles(
             @RequestParam(required = false)
             @Positive
-            Long ownerId
+            Long ownerId,
+            @PageableDefault(page = 0, size = 10, sort = "model", direction = Sort.Direction.ASC)
+            @ParameterObject
+            Pageable pageable
     ) {
         if (ownerId != null) {
-            return ResponseEntity.ok(vehicleService.getVehiclesByOwnerId(ownerId));
+            return ResponseEntity.ok(vehicleService.getVehiclesByOwnerId(ownerId, pageable));
         }
-        return ResponseEntity.ok(vehicleService.getAllVehicles());
+        return ResponseEntity.ok(vehicleService.getAllVehicles(pageable));
     }
 
-    // TODO teste de veículo não encontrado, id inválido ou nulo
     @GetMapping("/{vehicleId}")
     public ResponseEntity<VehicleResponse> getVehicle(
             @PathVariable
@@ -60,7 +66,6 @@ public class VehicleController {
         return ResponseEntity.ok(vehicleService.getVehicle(vehicleId));
     }
 
-    // TODO handle de id nulo ou inválido
     @DeleteMapping("/{vehicleId}")
     public ResponseEntity<VehicleResponse> deleteVehicle(
             @PathVariable
@@ -72,7 +77,6 @@ public class VehicleController {
         return ResponseEntity.noContent().build();
     }
 
-    // TODO teste id de veículo inválido ou nulo, parâmentros inválidos ou nulos, veículo não encontrado, e placa repetida no banco
     // Não permite atualizar o owner, apenas dados do veículo
     @PutMapping("/{vehicleId}")
     public ResponseEntity<VehicleResponse> updateVehicle(
@@ -86,5 +90,4 @@ public class VehicleController {
     ) {
         return ResponseEntity.ok(vehicleService.updateVehicle(vehicleId, vehiclePutRequest));
     }
-
 }

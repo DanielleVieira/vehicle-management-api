@@ -11,6 +11,8 @@ import com.github.daniellevieira.vehiclemanagementapi.mapper.VehicleMapper;
 import com.github.daniellevieira.vehiclemanagementapi.model.Vehicle;
 import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
 import com.github.daniellevieira.vehiclemanagementapi.repository.VehicleRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -45,8 +47,8 @@ public class VehicleService {
         return vehicleMapper.toResponse(saveVehicle(vehicle));
     }
 
-    public List<VehicleResponse> getAllVehicles() {
-        return vehicleMapper.toResponseList(vehicleRepository.findAll());
+    public Page<VehicleResponse> getAllVehicles(Pageable pageable) {
+        return vehicleRepository.findAll(pageable).map(vehicleMapper::toResponse);
     }
 
     public VehicleResponse getVehicle(Long vehicleId) {
@@ -79,12 +81,12 @@ public class VehicleService {
         return vehicleMapper.toResponse(saveVehicle(vehicle));
     }
 
-    public List<VehicleResponse> getVehiclesByOwnerId(Long ownerId) {
+    public Page<VehicleResponse> getVehiclesByOwnerId(Long ownerId, Pageable pageable) {
         var owner = clientRepository
                 .findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Owner with id " + ownerId + " not found"));
-        var vehicles = vehicleRepository.findAllByOwner(owner);
-        return vehicleMapper.toResponseList(vehicles);
+        var vehicles = vehicleRepository.findAllByOwner(owner, pageable);
+        return vehicles.map(vehicleMapper::toResponse);
     }
 
     private Vehicle saveVehicle(Vehicle vehicle) {

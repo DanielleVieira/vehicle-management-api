@@ -8,6 +8,8 @@ import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFound
 import com.github.daniellevieira.vehiclemanagementapi.mapper.ClientMapper;
 import com.github.daniellevieira.vehiclemanagementapi.model.Client;
 import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,9 +36,9 @@ public class ClientService {
         return clientMapper.toResponse(client);
     }
 
-    public List<ClientResponse> getAllClients() {
-        var clients = clientRepository.findAll();
-        return clientMapper.toResponseList(clients);
+    public Page<ClientResponse> getAllClients(Pageable pageable) {
+        var clients = clientRepository.findAll(pageable);
+        return clients.map(clientMapper:: toResponse);
     }
 
     // TODO verificação para regra de negócio na qual só é possível eliminar cliente sem veículo associado

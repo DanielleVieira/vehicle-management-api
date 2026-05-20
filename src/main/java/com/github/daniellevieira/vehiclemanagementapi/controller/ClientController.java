@@ -7,6 +7,11 @@ import com.github.daniellevieira.vehiclemanagementapi.service.ClientService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,9 +50,14 @@ public class ClientController {
         return ResponseEntity.ok(clientService.getClient(clientId));
     }
 
+    // TODO testes e handle para o caso de PropertyReferenceException do pageable
     @GetMapping
-    public ResponseEntity<List<ClientResponse>> getAllClients() {
-        return ResponseEntity.ok(clientService.getAllClients());
+    public ResponseEntity<Page<ClientResponse>> getAllClients(
+            @PageableDefault(page = 0, size = 10, sort = "name", direction = Sort.Direction.ASC)
+            @ParameterObject
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(clientService.getAllClients(pageable));
     }
 
     @DeleteMapping("/{clientId}")
