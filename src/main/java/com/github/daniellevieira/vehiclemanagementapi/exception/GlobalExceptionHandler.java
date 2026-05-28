@@ -3,6 +3,7 @@ package com.github.daniellevieira.vehiclemanagementapi.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -102,6 +103,16 @@ public class GlobalExceptionHandler {
                 "Invalid parameter: Please check your request parameters",
                 req.getRequestURI(),
                 ex.getConstraintViolations().stream().map(c -> c.getPropertyPath() + ": " + c.getMessage()).toList()
+        );
+    }
+
+    @ExceptionHandler(value = PropertyReferenceException.class)
+    public ResponseEntity<ErrorResponse> handlePropertyReferenceException(PropertyReferenceException ex, HttpServletRequest req) {
+        return createErrorResponseEntity(
+                HttpStatus.BAD_REQUEST,
+                "Invalid parameter: Please check your request parameters",
+                req.getRequestURI(),
+                List.of(ex.getPropertyName() + ": " + ex.getMessage())
         );
     }
 

@@ -16,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -262,53 +266,65 @@ public class VehicleControllerTest {
 
     @Test
     public void getAllVehicles_GetVehicles_Ok_Test() throws Exception {
-        when(service.getAllVehicles()).thenReturn(Arrays.asList(createResponse, createResponse, createResponse));
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        when(service.getAllVehicles(page)).thenReturn(new PageImpl<>(List.of(createResponse, createResponse, createResponse)));
 
         mockMvc.perform(get("/api/v1/vehicles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].licensePlate").value("ABC1234"))
-                .andExpect(jsonPath("$[0].year").value(2025))
-                .andExpect(jsonPath("$[0].make").value("VOLKSWAGEN"))
-                .andExpect(jsonPath("$[0].model").value("T-CROSS"))
-                .andExpect(jsonPath("$[0].owner.id").value(1L));;
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].licensePlate").value("ABC1234"))
+                .andExpect(jsonPath("$.content[0].year").value(2025))
+                .andExpect(jsonPath("$.content[0].make").value("VOLKSWAGEN"))
+                .andExpect(jsonPath("$.content[0].model").value("T-CROSS"))
+                .andExpect(jsonPath("$.content[0].owner.id").value(1L))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(3));
     }
 
     @Test
     public void getAllClients_EmptyList_Ok_Test() throws Exception {
-        when(service.getAllVehicles()).thenReturn(List.of());
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        when(service.getAllVehicles(page)).thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/api/v1/vehicles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
     public void getAllVehicles_WithOwnerId_Ok_Test() throws Exception {
-        when(service.getVehiclesByOwnerId(1L)).thenReturn(Arrays.asList(createResponse, updateResponse));
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        when(service.getVehiclesByOwnerId(1L, page)).thenReturn(new PageImpl<>(List.of(createResponse, updateResponse)));
 
         mockMvc.perform(get("/api/v1/vehicles")
                         .param("ownerId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].owner.id").value(1L))
-                .andExpect(jsonPath("$[1].licensePlate").value("DEF1234"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].owner.id").value(1L))
+                .andExpect(jsonPath("$.content[1].licensePlate").value("DEF1234"))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test
     public void getAllVehicles_WithOwnerId_EmptyList_Ok_Test() throws Exception {
-        when(service.getVehiclesByOwnerId(1L)).thenReturn(List.of());
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        when(service.getVehiclesByOwnerId(1L, page)).thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/api/v1/vehicles")
                         .param("ownerId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
@@ -326,7 +342,8 @@ public class VehicleControllerTest {
 
     @Test
     public void getAllVehicles_OwnerNotFound_NotFound_Test() throws Exception {
-        when(service.getVehiclesByOwnerId(2L)).thenThrow(new ResourceNotFoundException("Owner with id 2 not found"));
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        when(service.getVehiclesByOwnerId(2L, page)).thenThrow(new ResourceNotFoundException("Owner with id 2 not found"));
 
         mockMvc.perform(get("/api/v1/vehicles")
                         .param("ownerId", "2"))

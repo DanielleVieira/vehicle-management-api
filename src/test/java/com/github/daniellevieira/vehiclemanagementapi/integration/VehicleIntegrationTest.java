@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = false) // para dasativar filtros do spring Security
 @ActiveProfiles("test")
 @Import(GlobalExceptionHandler.class)
 public class VehicleIntegrationTest {
@@ -334,22 +334,28 @@ public class VehicleIntegrationTest {
 
         mockMvc.perform(get("/api/v1/vehicles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(vehicleId))
-                .andExpect(jsonPath("$[0].licensePlate").value("ABC1234"))
-                .andExpect(jsonPath("$[0].year").value(2025))
-                .andExpect(jsonPath("$[0].make").value("VOLKSWAGEN"))
-                .andExpect(jsonPath("$[0].model").value("T-CROSS"))
-                .andExpect(jsonPath("$[0].owner.id").value(ownerId));;
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(vehicleId))
+                .andExpect(jsonPath("$.content[0].licensePlate").value("ABC1234"))
+                .andExpect(jsonPath("$.content[0].year").value(2025))
+                .andExpect(jsonPath("$.content[0].make").value("VOLKSWAGEN"))
+                .andExpect(jsonPath("$.content[0].model").value("T-CROSS"))
+                .andExpect(jsonPath("$.content[0].owner.id").value(ownerId))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
     public void getAllClients_EmptyList_Ok_Test() throws Exception {
         mockMvc.perform(get("/api/v1/vehicles"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
@@ -368,11 +374,14 @@ public class VehicleIntegrationTest {
         mockMvc.perform(get("/api/v1/vehicles")
                         .param("ownerId", ownerId.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(vehicleId))
-                .andExpect(jsonPath("$[0].owner.id").value(ownerId))
-                .andExpect(jsonPath("$[0].licensePlate").value("ABC1234"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(vehicleId))
+                .andExpect(jsonPath("$.content[0].owner.id").value(ownerId))
+                .andExpect(jsonPath("$.content[0].licensePlate").value("ABC1234"))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
@@ -383,8 +392,11 @@ public class VehicleIntegrationTest {
         mockMvc.perform(get("/api/v1/vehicles")
                         .param("ownerId", ownerId.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
@@ -411,6 +423,59 @@ public class VehicleIntegrationTest {
                 .andExpect(jsonPath("$.path").value("/api/v1/vehicles"))
                 .andExpect(jsonPath("$.details").isArray())
                 .andExpect(jsonPath("$.details").isEmpty());
+    }
+
+    @Test
+    @Transactional
+    public void getAllVehicles_ValidParameters_Ok_Test() throws Exception {
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+        var vehicleCreateRequest = new VehicleCreateRequest(
+                "Volkswagen",
+                "T-Cross",
+                2025,
+                "ABC-1234",
+                ownerId
+        );
+        var vehicleId = postVehicleAndReturnId(vehicleCreateRequest);
+
+        mockMvc.perform(get("/api/v1/vehicles")
+                                .param("ownerId", ownerId.toString())
+                                .param("page", "0")
+                                .param("size", "11")
+                                .param("sort", "model,ASC")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(vehicleId))
+                .andExpect(jsonPath("$.content[0].licensePlate").value("ABC1234"))
+                .andExpect(jsonPath("$.content[0].year").value(2025))
+                .andExpect(jsonPath("$.content[0].make").value("VOLKSWAGEN"))
+                .andExpect(jsonPath("$.content[0].model").value("T-CROSS"))
+                .andExpect(jsonPath("$.content[0].owner.id").value(ownerId))
+                .andExpect(jsonPath("$.size").value(11))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @Transactional
+    public void getAllVehicles_InvalidParameter_BadRequest_Test() throws Exception {
+        var ownerId = postClientAndReturnId(clientCreateRequest);
+
+        mockMvc.perform(get("/api/v1/vehicles")
+                                .param("ownerId", ownerId.toString())
+                                .param("page", "0")
+                                .param("size", "10")
+                                .param("sort", "mode,ASC")
+                        )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("Invalid parameter")))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.path").value("/api/v1/vehicles"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details", hasItem(containsString("mode"))));
     }
 
     @Test

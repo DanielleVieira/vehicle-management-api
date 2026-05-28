@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
@@ -225,37 +226,37 @@ public class ClientServiceTest {
 
     @Test
     public void getAllClients_GetAllClients_Success_Test() {
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
         setProperty("cpf", "63099738948", savedOtherClient);
-        var clientsList = List.of(savedClient, savedOtherClient);
-        var responseList = List.of(
-                clientRes,
-                new ClientResponse(
-                        savedOtherClient.getId(),
-                        savedOtherClient.getName(),
-                        savedOtherClient.getEmail(),
-                        savedOtherClient.getCpf(),
-                        savedOtherClient.getBirthDate()
-                )
-        );
-        when(repository.findAll()).thenReturn(clientsList);
-        when(mapper.toResponseList(clientsList)).thenReturn(responseList);
+        var clientsPage = new PageImpl<>(List.of(savedClient, savedOtherClient));
+        when(repository.findAll(page)).thenReturn(clientsPage);
+        when(mapper.toResponse(savedClient)).thenReturn(clientRes);
+        when(mapper.toResponse(savedOtherClient)).thenReturn(new ClientResponse(
+                savedOtherClient.getId(),
+                savedOtherClient.getName(),
+                savedOtherClient.getEmail(),
+                savedOtherClient.getCpf(),
+                savedOtherClient.getBirthDate()
+        ));
 
-        var response = service.getAllClients();
+        var response = service.getAllClients(page);
 
-        assertEquals(responseList, response);
-        verify(repository).findAll();
-        verify(mapper).toResponseList(clientsList);
+        assertEquals(response.getTotalElements(), clientsPage.getTotalElements());
+        verify(repository).findAll(page);
+        verify(mapper).toResponse(savedClient);
+        verify(mapper).toResponse(savedOtherClient);
     }
 
     @Test
     public void getAllClients_GetAllClients_EmptyList_Test() {
-        when(repository.findAll()).thenReturn(List.of());
-        when(mapper.toResponseList(List.of())).thenReturn(List.of());
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
+        Page<Client> clientsPage = new PageImpl<>(List.of());
+        when(repository.findAll(page)).thenReturn(clientsPage);
 
-        var response = service.getAllClients();
+        var response = service.getAllClients(page);
 
-        assertEquals(List.of(), response);
-        verify(repository).findAll();
-        verify(mapper).toResponseList(List.of());
+        assertTrue(response.isEmpty());
+        verify(repository).findAll(page);
+        verify(mapper, never()).toResponse(any());
     }
 }

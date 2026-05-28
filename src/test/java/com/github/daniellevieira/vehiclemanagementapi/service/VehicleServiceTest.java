@@ -19,14 +19,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -331,75 +331,76 @@ public class VehicleServiceTest {
 
     @Test
     public void getAllVehicles_GetAllVehicles_Success_Test() {
-        var vehiclesList = List.of(savedVehicle, otherVehicle);
-        var responseList = List.of(
-                vehicleRes,
-                new VehicleResponse(
-                        2L,
-                        "FORD",
-                        "KA",
-                        2018,
-                        "XYZ9999",
-                        ownerRes
-                )
-        );
-        when(vehicleRepository.findAll()).thenReturn(vehiclesList);
-        when(vehicleMapper.toResponseList(vehiclesList)).thenReturn(responseList);
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        var vehiclesPage = new PageImpl<>(List.of(savedVehicle, otherVehicle));
+        when(vehicleRepository.findAll(page)).thenReturn(vehiclesPage);
+        when(vehicleMapper.toResponse(savedVehicle)).thenReturn(vehicleRes);
+        when(vehicleMapper.toResponse(otherVehicle)).thenReturn(new VehicleResponse(
+                2L,
+                "FORD",
+                "KA",
+                2018,
+                "XYZ9999",
+                ownerRes
+        ));
 
-        var response = service.getAllVehicles();
+        var response = service.getAllVehicles(page);
 
-        assertEquals(responseList, response);
-        verify(vehicleRepository).findAll();
-        verify(vehicleMapper).toResponseList(vehiclesList);
+        assertEquals(vehiclesPage.getTotalElements(), response.getTotalElements());
+        verify(vehicleRepository).findAll(page);
+        verify(vehicleMapper).toResponse(savedVehicle);
+        verify(vehicleMapper).toResponse(otherVehicle);
     }
 
     @Test
     public void getAllVehicles_GetAllVehicles_EmptyList_Test() {
-        when(vehicleRepository.findAll()).thenReturn(List.of());
-        when(vehicleMapper.toResponseList(List.of())).thenReturn(List.of());
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        Page<Vehicle> vehiclesPage = new PageImpl<>(List.of());
+        when(vehicleRepository.findAll(page)).thenReturn(vehiclesPage);
 
-        var response = service.getAllVehicles();
+        var response = service.getAllVehicles(page);
 
-        assertEquals(List.of(), response);
-        verify(vehicleRepository).findAll();
-        verify(vehicleMapper).toResponseList(List.of());
+        assertTrue(response.isEmpty());
+        verify(vehicleRepository).findAll(page);
+        verify(vehicleMapper, never()).toResponse(any());
     }
 
     @Test
     public void getVehiclesByOwnerId_GetVehicles_Success_Test() {
-        var vehiclesList = List.of(savedVehicle, otherVehicle);
-        var responseList = List.of(
-                vehicleRes,
-                new VehicleResponse(
-                        2L,
-                        "FORD",
-                        "KA",
-                        2018,
-                        "XYZ9999",
-                        ownerRes
-                )
-        );
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
+        var vehiclesPage = new PageImpl<>(List.of(savedVehicle, otherVehicle));
+
         when(clientRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(vehicleRepository.findAllByOwner(owner)).thenReturn(vehiclesList);
-        when(vehicleMapper.toResponseList(vehiclesList)).thenReturn(responseList);
+        when(vehicleRepository.findAllByOwner(owner, page)).thenReturn(vehiclesPage);
+        when(vehicleMapper.toResponse(savedVehicle)).thenReturn(vehicleRes);
+        when(vehicleMapper.toResponse(otherVehicle)).thenReturn(new VehicleResponse(
+                2L,
+                "FORD",
+                "KA",
+                2018,
+                "XYZ9999",
+                ownerRes
+        ));
 
-        var response = service.getVehiclesByOwnerId(1L);
+        var response = service.getVehiclesByOwnerId(1L, page);
 
-        assertEquals(responseList, response);
+        assertEquals(vehiclesPage.getTotalElements(), response.getTotalElements());
         verify(clientRepository).findById(1L);
-        verify(vehicleRepository).findAllByOwner(owner);
-        verify(vehicleMapper).toResponseList(vehiclesList);
+        verify(vehicleRepository).findAllByOwner(owner, page);
+        verify(vehicleMapper).toResponse(savedVehicle);
+        verify(vehicleMapper).toResponse(otherVehicle);
     }
 
     @Test
     public void getVehiclesByOwnerId_OwnerNotFound_ThrowException_Test() {
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "model"));
         when(clientRepository.findById(10L)).thenReturn(Optional.empty());
 
-        var exception = assertThrows(ResourceNotFoundException.class, () -> service.getVehiclesByOwnerId(10L));
+        var exception = assertThrows(ResourceNotFoundException.class, () -> service.getVehiclesByOwnerId(10L, page));
 
         assertEquals("Owner with id 10 not found", exception.getMessage());
         verify(clientRepository).findById(10L);
-        verify(vehicleRepository, never()).findAllByOwner(any());
-        verify(vehicleMapper, never()).toResponseList(any());
+        verify(vehicleRepository, never()).findAllByOwner(any(), any());
+        verify(vehicleMapper, never()).toResponse(any());
     }
 }

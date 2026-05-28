@@ -17,6 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -218,27 +222,34 @@ public class ClientControllerTest {
 
     @Test
     public void getAllClients_GetClients_Ok_Test() throws Exception {
-        when(service.getAllClients()).thenReturn(Arrays.asList(createResponse, createResponse, createResponse));
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
+        when(service.getAllClients(page)).thenReturn(new PageImpl<>(List.of(createResponse, createResponse, createResponse)));
 
         mockMvc.perform(get("/api/v1/clients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].cpf").value("10187236500"))
-                .andExpect(jsonPath("$[0].birthDate").value("2025-11-07"))
-                .andExpect(jsonPath("$[0].name").value("MAXI"))
-                .andExpect(jsonPath("$[0].email").value("maxi@gmail.com"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].cpf").value("10187236500"))
+                .andExpect(jsonPath("$.content[0].birthDate").value("2025-11-07"))
+                .andExpect(jsonPath("$.content[0].name").value("MAXI"))
+                .andExpect(jsonPath("$.content[0].email").value("maxi@gmail.com"))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(3));
     }
 
     @Test
     public void getAllClients_EmptyList_Ok_Test() throws Exception {
-        when(service.getAllClients()).thenReturn(List.of());
+        Pageable page = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
+        when(service.getAllClients(page)).thenReturn(new PageImpl<>(List.of()));
+
 
         mockMvc.perform(get("/api/v1/clients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

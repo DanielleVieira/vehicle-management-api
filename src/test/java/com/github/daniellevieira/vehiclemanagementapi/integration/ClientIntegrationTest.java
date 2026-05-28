@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = false) // para dasativar o filtros do spring Security
 @ActiveProfiles("test")
 @Import(GlobalExceptionHandler.class)
 public class ClientIntegrationTest {
@@ -245,21 +245,67 @@ public class ClientIntegrationTest {
         var clientId = postClientAndReturnId(clientCreateRequest);
         mockMvc.perform(get("/api/v1/clients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(clientId))
-                .andExpect(jsonPath("$[0].cpf").value("10187236500"))
-                .andExpect(jsonPath("$[0].birthDate").value("2025-11-07"))
-                .andExpect(jsonPath("$[0].name").value("MAXI"))
-                .andExpect(jsonPath("$[0].email").value("maxi@gmail.com"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(clientId))
+                .andExpect(jsonPath("$.content[0].cpf").value("10187236500"))
+                .andExpect(jsonPath("$.content[0].birthDate").value("2025-11-07"))
+                .andExpect(jsonPath("$.content[0].name").value("MAXI"))
+                .andExpect(jsonPath("$.content[0].email").value("maxi@gmail.com"))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
     }
 
     @Test
     public void getAllClients_EmptyList_Ok_Test() throws Exception {
         mockMvc.perform(get("/api/v1/clients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    @Transactional
+    public void getAllClients_ValidParameters_Ok_Test() throws Exception {
+        var clientId = postClientAndReturnId(clientCreateRequest);
+        mockMvc.perform(get("/api/v1/clients")
+                        .param("page", "0")
+                        .param("size", "11")
+                        .param("sort", "name,ASC")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(clientId))
+                .andExpect(jsonPath("$.content[0].cpf").value("10187236500"))
+                .andExpect(jsonPath("$.content[0].birthDate").value("2025-11-07"))
+                .andExpect(jsonPath("$.content[0].name").value("MAXI"))
+                .andExpect(jsonPath("$.content[0].email").value("maxi@gmail.com"))
+                .andExpect(jsonPath("$.size").value(11))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+    }
+
+    @Test
+    public void getClient_InvalidParameter_BadRequest_Test() throws Exception {
+        mockMvc.perform(get("/api/v1/clients")
+                        .param("page", "0")
+                        .param("size", "11")
+                        .param("sort", "nam,ASC")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("Invalid parameter")))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.path").value("/api/v1/clients"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details", hasItem(containsString("nam"))));
     }
 
     @Test
