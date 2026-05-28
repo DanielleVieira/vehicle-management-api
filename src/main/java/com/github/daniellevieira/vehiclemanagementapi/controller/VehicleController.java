@@ -17,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @Validated
 @RestController
 @RequestMapping("api/v1/vehicles")
@@ -40,7 +38,6 @@ public class VehicleController {
         return ResponseEntity.created(location).body(vehicleResponse);
     }
 
-    // TODO testes e handle para o caso de PropertyReferenceException do pageable
     @GetMapping
     public ResponseEntity<Page<VehicleResponse>> getAllVehicles(
             @RequestParam(required = false)

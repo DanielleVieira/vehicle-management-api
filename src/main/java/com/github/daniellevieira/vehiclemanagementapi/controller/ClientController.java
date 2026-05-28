@@ -4,6 +4,7 @@ import com.github.daniellevieira.vehiclemanagementapi.dto.ClientCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientPutRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.ClientResponse;
 import com.github.daniellevieira.vehiclemanagementapi.service.ClientService;
+import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -15,9 +16,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
-
-import java.util.List;
 
 @Validated
 @RestController
@@ -50,7 +48,6 @@ public class ClientController {
         return ResponseEntity.ok(clientService.getClient(clientId));
     }
 
-    // TODO testes e handle para o caso de PropertyReferenceException do pageable
     @GetMapping
     public ResponseEntity<Page<ClientResponse>> getAllClients(
             @PageableDefault(page = 0, size = 10, sort = "name", direction = Sort.Direction.ASC)

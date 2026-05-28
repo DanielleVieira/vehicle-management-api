@@ -1,6 +1,5 @@
 package com.github.daniellevieira.vehiclemanagementapi.dto.auth;
 
-import com.github.daniellevieira.vehiclemanagementapi.model.auth.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

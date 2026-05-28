@@ -2,7 +2,6 @@ package com.github.daniellevieira.vehiclemanagementapi.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public record LoginRequest(
         @NotBlank(message = "must not be blank")

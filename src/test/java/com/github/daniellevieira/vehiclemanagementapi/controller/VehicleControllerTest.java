@@ -2,7 +2,10 @@ package com.github.daniellevieira.vehiclemanagementapi.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.github.daniellevieira.vehiclemanagementapi.dto.*;
+import com.github.daniellevieira.vehiclemanagementapi.dto.ClientResponse;
+import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleCreateRequest;
+import com.github.daniellevieira.vehiclemanagementapi.dto.VehiclePutRequest;
+import com.github.daniellevieira.vehiclemanagementapi.dto.VehicleResponse;
 import com.github.daniellevieira.vehiclemanagementapi.exception.BusinessException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.GlobalExceptionHandler;
@@ -24,9 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;

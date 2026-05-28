@@ -3,15 +3,9 @@ package com.github.daniellevieira.vehiclemanagementapi.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.daniellevieira.vehiclemanagementapi.dto.*;
-import com.github.daniellevieira.vehiclemanagementapi.exception.BusinessException;
-import com.github.daniellevieira.vehiclemanagementapi.exception.DuplicateResourceException;
 import com.github.daniellevieira.vehiclemanagementapi.exception.GlobalExceptionHandler;
-import com.github.daniellevieira.vehiclemanagementapi.exception.ResourceNotFoundException;
-import com.github.daniellevieira.vehiclemanagementapi.model.Client;
-import com.github.daniellevieira.vehiclemanagementapi.model.Vehicle;
 import com.github.daniellevieira.vehiclemanagementapi.repository.ClientRepository;
 import com.github.daniellevieira.vehiclemanagementapi.repository.VehicleRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +19,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 

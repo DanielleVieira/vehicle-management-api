@@ -4,8 +4,6 @@ import com.github.daniellevieira.vehiclemanagementapi.dto.auth.LoginRequest;
 import com.github.daniellevieira.vehiclemanagementapi.dto.auth.LoginResponse;
 import com.github.daniellevieira.vehiclemanagementapi.dto.auth.UserCreateRequest;
 import com.github.daniellevieira.vehiclemanagementapi.service.auth.UserService;
-import com.github.daniellevieira.vehiclemanagementapi.util.UriUtils;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
