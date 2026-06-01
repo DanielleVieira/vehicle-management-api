@@ -1,0 +1,53 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: vehicle-mysql
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${USER_DB}
+      MYSQL_PASSWORD: ${PASSWORD_DB}
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: vehicle-api
+
+    restart: always
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      URL_DB: jdbc:mysql://mysql:3306/${MYSQL_DATABASE} # o container vai usar as variáveis de ambiente do compose, por isso precisa ter o mesmo nome do .env
+      USER_DB: ${USER_DB}
+      PASSWORD_DB: ${PASSWORD_DB}
+
+      DDL_AUTO: ${DDL_AUTO}
+
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      SECRET_JWT: ${SECRET_JWT}
+
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+
+volumes:
+  mysql_data:
