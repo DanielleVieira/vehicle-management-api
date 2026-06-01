@@ -1,6 +1,6 @@
 # Vehicle Management API
 
-API REST para gerenciamento de clientes, veículos e usuários com autenticação JWT.
+API REST para gerenciamento de clientes e veículos, com cadastro/login de usuários, autenticação JWT e controle de acesso por perfil.
 
 ## Stack
 
@@ -9,7 +9,7 @@ API REST para gerenciamento de clientes, veículos e usuários com autenticaçã
 - Spring Web MVC
 - Spring Data JPA / Hibernate
 - Spring Security
-- JWT (`jjwt` 0.13.0)
+- JWT com `jjwt` 0.13.0
 - Bean Validation
 - MySQL
 - H2 para testes
@@ -17,57 +17,81 @@ API REST para gerenciamento de clientes, veículos e usuários com autenticaçã
 - Lombok
 - Springdoc OpenAPI
 - Gradle Wrapper
+- Docker / Docker Compose
 
-## O que a API faz
+## Funcionalidades
 
-- CRUD de clientes
-- CRUD de veículos
-- listagem de veículos por proprietário com `GET /api/v1/vehicles?ownerId={ownerId}`
-- cadastro e login de usuários
-- consulta de usuário por id
-- controle de acesso com JWT e perfis `USER` e `ADMIN`
+- CRUD de clientes.
+- CRUD de veículos.
+- Listagem paginada de clientes e veículos.
+- Filtro de veículos por proprietário com `GET /api/v1/vehicles?ownerId={ownerId}`.
+- Cadastro e login de usuários.
+- Autenticação stateless com JWT.
+- Autorização por perfis `USER` e `ADMIN`.
+- Seed automático de usuário administrador na inicialização.
 
 ## Requisitos
 
-- Java 25
-- MySQL 8+
+- Java 25.
+- Docker e Docker Compose, caso use o banco via container.
+- MySQL 8+, caso rode o banco fora do Compose.
 
 ## Configuração
 
-As configurações principais ficam em [application.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application.yaml) e [application-test.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application-test.yaml).
+A aplicação lê as configurações de ambiente em [application.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application.yaml). Para testes, usa [application-test.yaml](/home/danielle/IdeaProjects/vehicle-management-api/src/main/resources/application-test.yaml) com H2 em memória.
 
-Defina estas variáveis de ambiente antes de subir a aplicação:
+Variáveis usadas pela aplicação:
 
-- `URL_DB`
-- `USER_DB`
-- `PASSWORD_DB`
-- `SECRET_JWT`
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
+```env
+URL_DB=jdbc:mysql://localhost:3306/<database_name>
+USER_DB=<database_user>
+PASSWORD_DB=<database_password>
+DDL_AUTO=update
+SECRET_JWT=<base64_jwt_secret>
+JWT_EXPIRATION=1800000
+ADMIN_USERNAME=<admin_email>
+ADMIN_PASSWORD=<admin_password>
+```
 
-Exemplo:
+Variáveis extras usadas pelo `docker-compose.yml` para criar o banco:
 
-```bash
-export URL_DB=jdbc:mysql://localhost:3306/vehicle_management
-export USER_DB=root
-export PASSWORD_DB=secret
-export SECRET_JWT=ZmFrZVNlY3JldEZvclRlc3RzRmFrZVNlY3JldEZvclRlc3RzMTIzNDU2
-export ADMIN_USERNAME=admin@local
-export ADMIN_PASSWORD=admin12345
+```env
+MYSQL_ROOT_PASSWORD=<mysql_root_password>
+MYSQL_DATABASE=<database_name>
 ```
 
 Observações:
 
-- `SECRET_JWT` precisa estar em Base64, porque a chave é carregada com `Decoders.BASE64.decode(...)`.
-- Ao iniciar a aplicação, um usuário administrador é criado ou promovido para `ADMIN` com base em `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
-- O token JWT expira em 30 minutos.
+- `SECRET_JWT` precisa estar em Base64, pois o token é assinado a partir de `Decoders.BASE64.decode(...)`.
+- `JWT_EXPIRATION` é definido em milissegundos. O exemplo `1800000` equivale a 30 minutos.
+- `DDL_AUTO` controla o `spring.jpa.hibernate.ddl-auto`; para desenvolvimento, `update` é suficiente.
+- Na inicialização, a aplicação cria o usuário `ADMIN_USERNAME` como `ADMIN` ou promove esse usuário se ele já existir.
 
-## Como executar com Gradle
+## Executando Com Gradle
 
-Subir a API:
+Suba um MySQL local e exporte as variáveis de ambiente antes de iniciar a API.
+
+```bash
+export URL_DB=jdbc:mysql://localhost:3306/<database_name>
+export USER_DB=<database_user>
+export PASSWORD_DB=<database_password>
+export DDL_AUTO=update
+export SECRET_JWT=<base64_jwt_secret>
+export JWT_EXPIRATION=1800000
+export ADMIN_USERNAME=<admin_email>
+export ADMIN_PASSWORD=<admin_password>
+```
+
+Rodar a aplicação:
 
 ```bash
 ./gradlew bootRun
+```
+
+Executar os testes:
+
+```bash
+./gradlew test
 ```
 
 Gerar o artefato:
@@ -76,28 +100,49 @@ Gerar o artefato:
 ./gradlew build
 ```
 
-Executar a aplicação empacotada:
+Executar o JAR gerado:
 
 ```bash
 java -jar build/libs/vehicle-management-api-0.0.1-SNAPSHOT.jar
 ```
 
-## Documentação da API
+## Executando Com Docker Compose
 
-Com a aplicação em execução:
+O Compose sobe dois serviços: `mysql` e `app`.
+
+```bash
+docker compose up --build
+```
+
+Para parar:
+
+```bash
+docker compose down
+```
+
+Para remover também o volume do MySQL:
+
+```bash
+docker compose down -v
+```
+
+## Documentação Da API
+
+Com a aplicação rodando:
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-## Autenticação e autorização
+## Autenticação
 
 Rotas públicas:
 
 - `POST /api/v1/auth/signup`
 - `POST /api/v1/auth/login`
-- Swagger/OpenAPI
+- `/swagger-ui/**`
+- `/v3/api-docs/**`
 
-Todas as outras rotas exigem token JWT no cabeçalho:
+As demais rotas exigem JWT no cabeçalho:
 
 ```http
 Authorization: Bearer <token>
@@ -105,15 +150,29 @@ Authorization: Bearer <token>
 
 Regras de acesso:
 
-- `DELETE /api/v1/clients/**`: somente `ADMIN`
-- `DELETE /api/v1/vehicles/**`: somente `ADMIN`
-- `/api/v1/users/**`: somente `ADMIN`
-- demais rotas autenticadas: `USER` ou `ADMIN`
+- `DELETE /api/v1/clients/**`: somente `ADMIN`.
+- `DELETE /api/v1/vehicles/**`: somente `ADMIN`.
+- `/api/v1/users/**`: somente `ADMIN`.
+- Demais rotas autenticadas: `USER` ou `ADMIN`.
 
-O CORS está liberado para:
+CORS está liberado para:
 
 - `http://localhost:3000`
 - `http://localhost:5173`
+
+## Paginação E Ordenação
+
+As listagens usam `Pageable` do Spring:
+
+- `GET /api/v1/clients?page=0&size=10&sort=name,asc`
+- `GET /api/v1/vehicles?page=0&size=10&sort=model,asc`
+- `GET /api/v1/vehicles?ownerId=1&page=0&size=10`
+
+Padrões:
+
+- Clientes: `page=0`, `size=10`, `sort=name,asc`.
+- Veículos: `page=0`, `size=10`, `sort=model,asc`.
+- Tamanho máximo de página: `100`.
 
 ## Endpoints
 
@@ -121,10 +180,7 @@ Base URL: `/api/v1`
 
 ### Auth
 
-- `POST /auth/signup`
-- `POST /auth/login`
-
-Exemplo de cadastro/login:
+`POST /auth/signup`
 
 ```json
 {
@@ -133,7 +189,16 @@ Exemplo de cadastro/login:
 }
 ```
 
-Exemplo de resposta:
+`POST /auth/login`
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+Resposta:
 
 ```json
 {
@@ -147,17 +212,13 @@ Exemplo de resposta:
 }
 ```
 
-### Usuários
-
-- `GET /users/{userId}` (`ADMIN`)
-
 ### Clientes
 
-- `POST /clients`
-- `GET /clients`
-- `GET /clients/{clientId}`
-- `PUT /clients/{clientId}`
-- `DELETE /clients/{clientId}` (`ADMIN`)
+- `POST /clients`: cria cliente.
+- `GET /clients`: lista clientes com paginação.
+- `GET /clients/{clientId}`: consulta cliente por id.
+- `PUT /clients/{clientId}`: atualiza cliente.
+- `DELETE /clients/{clientId}`: remove cliente. Requer `ADMIN`.
 
 Payload:
 
@@ -184,12 +245,12 @@ Resposta:
 
 ### Veículos
 
-- `POST /vehicles`
-- `GET /vehicles`
-- `GET /vehicles/{vehicleId}`
-- `GET /vehicles?ownerId={ownerId}`
-- `PUT /vehicles/{vehicleId}`
-- `DELETE /vehicles/{vehicleId}` (`ADMIN`)
+- `POST /vehicles`: cria veículo para um cliente existente.
+- `GET /vehicles`: lista veículos com paginação.
+- `GET /vehicles?ownerId={ownerId}`: lista veículos de um proprietário.
+- `GET /vehicles/{vehicleId}`: consulta veículo por id.
+- `PUT /vehicles/{vehicleId}`: atualiza dados do veículo.
+- `DELETE /vehicles/{vehicleId}`: remove veículo. Requer `ADMIN`.
 
 Payload de criação:
 
@@ -210,7 +271,7 @@ Payload de atualização:
   "make": "Toyota",
   "model": "Corolla",
   "year": 2021,
-  "licensePlate": "ABC1D23"
+  "licensePlate": "ABC-1234"
 }
 ```
 
@@ -222,7 +283,7 @@ Resposta:
   "make": "TOYOTA",
   "model": "COROLLA",
   "year": 2021,
-  "licensePlate": "ABC1D23",
+  "licensePlate": "ABC1234",
   "owner": {
     "id": 1,
     "name": "ANA SILVA",
@@ -233,47 +294,48 @@ Resposta:
 }
 ```
 
-## Regras de validação
+## Validações
 
-### Auth e usuários
+Auth e usuários:
 
-- `email`: obrigatório, formato válido, até 255 caracteres
-- `password`: obrigatória, entre 8 e 72 caracteres
+- `email`: obrigatório, formato válido e no máximo 255 caracteres.
+- `password` no cadastro: obrigatório, entre 8 e 72 caracteres.
+- `password` no login: obrigatório.
 
-### Clientes
+Clientes:
 
-- `name`: obrigatório, entre 3 e 100 caracteres
-- `email`: obrigatório, formato válido, até 255 caracteres
-- `cpf`: obrigatório e válido
-- `birthDate`: obrigatória e deve estar no passado
-- `clientId`: deve ser positivo
+- `name`: obrigatório, entre 3 e 100 caracteres.
+- `email`: obrigatório, formato válido e no máximo 255 caracteres.
+- `cpf`: obrigatório e válido.
+- `birthDate`: obrigatória e deve estar no passado.
+- `clientId`: deve ser positivo.
 
-### Veículos
+Veículos:
 
-- `make`: obrigatória, entre 3 e 50 caracteres
-- `model`: obrigatório, entre 3 e 100 caracteres
-- `year`: obrigatório e mínimo `1886`
-- `licensePlate`: obrigatória e deve seguir o padrão brasileiro antigo ou Mercosul
-- `ownerId`: obrigatório no `POST /vehicles` e deve ser positivo
-- `vehicleId`: deve ser positivo
+- `make`: obrigatório, entre 3 e 50 caracteres.
+- `model`: obrigatório, entre 3 e 100 caracteres.
+- `year`: obrigatório e mínimo `1886`.
+- `licensePlate`: obrigatória, aceita padrão brasileiro antigo (`ABC-1234` ou `ABC1234`) ou Mercosul (`ABC1D23`).
+- `ownerId`: obrigatório no cadastro e deve ser positivo.
+- `vehicleId`: deve ser positivo.
 
-## Regras de negócio
+## Regras De Negócio
 
-- `name`, `make` e `model` são persistidos em maiúsculas
-- `email` é persistido em minúsculas
-- `cpf` é persistido sem pontos, espaços ou hífen
-- `licensePlate` é persistida em maiúsculas e sem hífen
-- não é possível cadastrar ou atualizar cliente com CPF já registrado
-- não é possível cadastrar ou atualizar usuário com email já registrado
-- não é possível cadastrar ou atualizar veículo com placa já registrada
-- o ano do veículo não pode ser maior que o ano atual
-- um veículo só pode ser criado para um cliente existente
-- `GET /vehicles?ownerId={ownerId}` exige que o proprietário exista
-- o `PUT /vehicles/{vehicleId}` não permite alterar o proprietário
+- `name`, `make` e `model` são persistidos em maiúsculas.
+- `email` é persistido em minúsculas.
+- `cpf` é persistido sem pontos, espaços ou hífen.
+- `licensePlate` é persistida em maiúsculas e sem hífen.
+- Não é possível cadastrar ou atualizar cliente com CPF já registrado.
+- Não é possível cadastrar usuário com email já registrado.
+- Não é possível cadastrar ou atualizar veículo com placa já registrada.
+- O ano do veículo não pode ser maior que o ano atual.
+- Um veículo só pode ser criado para um cliente existente.
+- `GET /vehicles?ownerId={ownerId}` exige que o proprietário exista.
+- `PUT /vehicles/{vehicleId}` não altera o proprietário.
 
-## Respostas de erro
+## Respostas De Erro
 
-A API retorna um payload padrão:
+A API retorna um payload padrão para erros tratados:
 
 ```json
 {
@@ -288,12 +350,12 @@ A API retorna um payload padrão:
 }
 ```
 
-Códigos mais comuns:
+Códigos comuns:
 
-- `400 Bad Request`: validação, JSON inválido ou parâmetro inválido
-- `401 Unauthorized`: token ausente, inválido ou credenciais incorretas
-- `403 Forbidden`: usuário autenticado sem permissão
-- `404 Not Found`: recurso não encontrado
-- `409 Conflict`: CPF, email ou placa duplicados; ou violação de integridade no banco
-- `422 Unprocessable Content`: regra de negócio violada, como ano maior que o atual
-- `500 Internal Server Error`: falha não tratada
+- `400 Bad Request`: validação, JSON inválido, parâmetro inválido ou ordenação por campo inexistente.
+- `401 Unauthorized`: token ausente, inválido ou credenciais incorretas.
+- `403 Forbidden`: usuário autenticado sem permissão.
+- `404 Not Found`: recurso não encontrado.
+- `409 Conflict`: CPF, email ou placa duplicados; ou violação de integridade no banco.
+- `422 Unprocessable Content`: regra de negócio violada, como ano maior que o atual.
+- `500 Internal Server Error`: falha não tratada.
